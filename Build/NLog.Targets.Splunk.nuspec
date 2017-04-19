@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+    <metadata>
+        <id>NLog.Targets.Splunk</id>
+        <version>0.0.1</version>
+        <title>NLog.Targets.Splunk</title>
+        <authors>Alan Barber</authors>
+        <owners>alanbarber</owners>
+        <licenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</licenseUrl>
+        <projectUrl>https://github.com/AlanBarber/NLog.Targets.Splunk</projectUrl>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>A NLog target for Splunk Http Event Collector (HEC) Sender</description>
+        <summary>A NLog target for Splunk Http Event Collector (HEC) Sender</summary>
+        <releaseNotes>Verison 0.0.1
+ - First publish to NuGet</releaseNotes>
+        <language>en-US</language>
+        <tags>nlog nlog-target splunk splunk-enterprise logging</tags>
+        <dependencies>
+            <dependency id="Newtonsoft.Json" version="10.0.2" />
+            <dependency id="NLog" version="4.4.6" />
+            <dependency id="Splunk.Logging.Common" version="1.6.1" />
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="nlog.config.transform" target="content\nlog.config.transform" />
+        <file src="..\Src\NLog.Targets.Splunk\bin\Release\NLog.Targets.Splunk.dll" target="lib\net46\NLog.Targets.Splunk.dll" />
+        <file src="install.ps1" target="tools\install.ps1" />
+    </files>
+</package>
