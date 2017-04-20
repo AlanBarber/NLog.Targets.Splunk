@@ -8,6 +8,7 @@
         <owners>alanbarber</owners>
         <licenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</licenseUrl>
         <projectUrl>https://github.com/AlanBarber/NLog.Targets.Splunk</projectUrl>
+        <iconUrl>https://raw.githubusercontent.com/AlanBarber/NLog.Targets.Splunk/master/Docs/nugeticon.png</iconUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A NLog target for Splunk Http Event Collector (HEC) Sender</description>
         <summary>A NLog target for Splunk Http Event Collector (HEC) Sender</summary>
