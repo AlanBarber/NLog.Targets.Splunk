@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("NLog.Targets.Splunk")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("A NLog target for Splunk Http Event Collector (HEC) Sender")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("NLog.Targets.Splunk")]
-[assembly: AssemblyCopyright("Copyright ©  2017")]
+[assembly: AssemblyCopyright("Copyright (c)  2017 Alan Barber")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

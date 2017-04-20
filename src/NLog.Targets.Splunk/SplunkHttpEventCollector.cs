@@ -9,6 +9,8 @@ namespace NLog.Targets.Splunk
     [Target("SplunkHttpEventCollector")]
     public sealed class SplunkHttpEventCollector : TargetWithLayout
     {
+        private HttpEventCollectorSender _hecSender;
+
         [RequiredParameter]
         public Uri ServerUrl { get; set; }
 
@@ -32,28 +34,20 @@ namespace NLog.Targets.Splunk
             {
                 throw new NLogConfigurationException("SplunkHttpEventCollector Token is not set!");
             }
-        }
 
-        protected override void Write(LogEventInfo logEvent)
-        {
-            SendEventToServer(logEvent);
-        }
-
-        private void SendEventToServer(LogEventInfo logEvent)
-        {
-            var hecSender = new HttpEventCollectorSender(
-                ServerUrl,                                                                                             // Splunk HEC URL
-                Token,                                                                                                 // Splunk HEC token *GUID*
-                new HttpEventCollectorEventInfo.Metadata(null, logEvent.LoggerName, "_json", Environment.MachineName), // Metadata
-                HttpEventCollectorSender.SendMode.Sequential,                                                          // Sequential sending to keep message in order
-                0,                                                                                                     // BatchInterval - Set to 0 to disable
-                0,                                                                                                     // BatchSizeBytes - Set to 0 to disable
-                0,                                                                                                     // BatchSizeCount - Set to 0 to disable
-                new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                                          // Resend Middleware with retry
+            _hecSender = new HttpEventCollectorSender(
+                ServerUrl,                                                                              // Splunk HEC URL
+                Token,                                                                                  // Splunk HEC token *GUID*
+                new HttpEventCollectorEventInfo.Metadata(null, null, "_json", Environment.MachineName), // Metadata
+                HttpEventCollectorSender.SendMode.Sequential,                                           // Sequential sending to keep message in order
+                0,                                                                                      // BatchInterval - Set to 0 to disable
+                0,                                                                                      // BatchSizeBytes - Set to 0 to disable
+                0,                                                                                      // BatchSizeCount - Set to 0 to disable
+                new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                           // Resend Middleware with retry
             );
 
             // throw error on send failure
-            hecSender.OnError += exception =>
+            _hecSender.OnError += exception =>
             {
                 throw new NLogRuntimeException($"SplunkHttpEventCollector failed to send log event to Splunk server '{ServerUrl?.Authority}' using token '{Token}'. Exception: {exception}");
             };
@@ -67,6 +61,29 @@ namespace NLog.Targets.Splunk
                     return httpWebRequest?.RequestUri.Authority == ServerUrl.Authority;
                 };
             }
+        }
+
+        protected override void Write(LogEventInfo logEvent)
+        {
+            SendEventToServer(logEvent);
+        }
+
+        private void SendEventToServer(LogEventInfo logEvent)
+        {
+            // Sanity check for LogEventInfo
+            if (logEvent == null)
+            {
+                throw new ArgumentNullException(nameof(logEvent));
+            }
+
+            // Make sure we have a properly setup HttpEventCollectorSender
+            if (_hecSender == null)
+            {
+                throw new NLogRuntimeException("SplunkHttpEventCollector SendEventToServer() called before InitializeTarget()");
+            }
+
+            // Build metaData
+            var metaData = new HttpEventCollectorEventInfo.Metadata(null, logEvent.LoggerName, "_json", Environment.MachineName);
 
             // Build optional data object
             dynamic objData = null;
@@ -84,12 +101,11 @@ namespace NLog.Targets.Splunk
                 {
                     objData.Properties = logEvent.Properties;
                 }
-
             }
-            
+
             // Send the event to splunk
-            hecSender.Send(Guid.NewGuid().ToString(), logEvent.Level.Name, Layout.Render(logEvent), objData);
-            hecSender.FlushSync();
+            _hecSender.Send(Guid.NewGuid().ToString(), logEvent.Level.Name, Layout.Render(logEvent), objData, metaData);
+            _hecSender.FlushSync();
         }
     }
 }

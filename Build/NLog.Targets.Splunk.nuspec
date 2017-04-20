@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
     <metadata>
         <id>NLog.Targets.Splunk</id>
-        <version>0.0.1</version>
+        <version>1.0.0</version>
         <title>NLog.Targets.Splunk</title>
         <authors>Alan Barber</authors>
         <owners>alanbarber</owners>
@@ -11,8 +11,11 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>A NLog target for Splunk Http Event Collector (HEC) Sender</description>
         <summary>A NLog target for Splunk Http Event Collector (HEC) Sender</summary>
-        <releaseNotes>Verison 0.0.1
+        <releaseNotes>Version 1.0.0
+ - Code cleanup and performance improvements
+Verison 0.0.1
  - First publish to NuGet</releaseNotes>
+        <copyright>Copyright (c) 2017 Alan Barber</copyright>
         <language>en-US</language>
         <tags>nlog nlog-target splunk splunk-enterprise logging</tags>
         <dependencies>
