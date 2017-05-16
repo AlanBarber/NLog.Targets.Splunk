@@ -1,17 +1,15 @@
 ﻿using NLog.Config;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Dynamic;
+using Xunit;
 
 namespace NLog.Targets.Splunk.Tests
 {
-    [TestClass]
     public class SplunkHttpEventCollectorTests
     {
         private ILogger _logger = null;
 
-        [TestInitialize()]
-        public void Initialize()
+        public SplunkHttpEventCollectorTests()
         {
             // Step 1. Create configuration object 
             var config = new LoggingConfiguration();
@@ -21,10 +19,9 @@ namespace NLog.Targets.Splunk.Tests
             config.AddTarget("splunkTarget", splunkHttpEventCollector);
 
             // Step 3. Set target properties 
-            splunkHttpEventCollector.ServerUrl = new Uri("https://localhost:8088");
-            splunkHttpEventCollector.Token = "1A29471E-3F18-4412-B032-80DD5712B691";
+            splunkHttpEventCollector.ServerUrl = new Uri("http://localhost:8088");
+            splunkHttpEventCollector.Token = "ED9F5A37-BE9A-4782-B5F7-B6E31AC369CA";
             splunkHttpEventCollector.RetriesOnError = 0;
-            splunkHttpEventCollector.IgnoreSslErrors = true;
             splunkHttpEventCollector.Layout = "${message}";
 
             // Step 4. Define rules
@@ -49,20 +46,19 @@ namespace NLog.Targets.Splunk.Tests
             return obj;
         }
 
-        [TestMethod]
+        [Fact]
         public void SendFatalWithException()
         {
             _logger.Fatal(new Exception(), "This is a Fatal log message with an Exception");
-            
         }
 
-        [TestMethod]
+        [Fact]
         public void SendFatalWithoutException()
         {
             _logger.Fatal("This is a Fatal log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendFatalWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Fatal, this.GetType().Name, "This is a Fatal log message with custom properties");
@@ -70,19 +66,19 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Fatal(logEventInfo);
         }
 
-        [TestMethod]
+        [Fact]
         public void SendErrorWithException()
         {
             _logger.Error(new Exception(), "This is a Error log message with an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendErrorWithoutException()
         {
             _logger.Error("This is a Error log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendErrorWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Error, this.GetType().Name, "This is a Error log message with custom properties");
@@ -90,19 +86,19 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Error(logEventInfo);
         }
 
-        [TestMethod]
+        [Fact]
         public void SendWarnWithException()
         {
             _logger.Warn(new Exception(), "This is a Warn log message with an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendWarnWithoutException()
         {
             _logger.Warn("This is a Warn log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendWarnWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Warn, this.GetType().Name, "This is a Warn log message with custom properties");
@@ -110,19 +106,19 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Warn(logEventInfo);
         }
 
-        [TestMethod]
+        [Fact]
         public void SendInfoWithException()
         {
             _logger.Info(new Exception(), "This is a Info log message with an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendInfoWithoutException()
         {
             _logger.Info("This is a Info log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendInfoWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Info, this.GetType().Name, "This is an Info log message with custom properties");
@@ -130,19 +126,19 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Info(logEventInfo);
         }
 
-        [TestMethod]
+        [Fact]
         public void SendDebugWithException()
         {
             _logger.Debug(new Exception(), "This is a Debug log message with an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendDebugWithoutException()
         {
             _logger.Debug("This is a Debug log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendDebugWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Debug, this.GetType().Name, "This is a Debug log message with custom properties");
@@ -150,19 +146,19 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Debug(logEventInfo);
         }
 
-        [TestMethod]
+        [Fact]
         public void SendTraceWithException()
         {
             _logger.Trace(new Exception(), "This is a Trace log message with an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendTraceWithoutException()
         {
             _logger.Trace("This is a Trace log message without an Exception");
         }
 
-        [TestMethod]
+        [Fact]
         public void SendTraceWithCustomProperties()
         {
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Trace, this.GetType().Name, "This is a Trace log message with custom properties");
@@ -170,7 +166,11 @@ namespace NLog.Targets.Splunk.Tests
             _logger.Trace(logEventInfo);
         }
 
-
+        [Fact]
+        public void SendTraceWithParameters()
+        {
+            _logger.Trace("This is a Trace log message with parameters - OrderId: {0}, Name: {1}", "1234", "Joe User");
+        }
 
     }
 }

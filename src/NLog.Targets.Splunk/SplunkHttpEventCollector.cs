@@ -1,8 +1,7 @@
 ﻿using NLog.Config;
 using Splunk.Logging;
 using System;
-using System.Dynamic;
-using System.Net;
+using System.Collections.Generic;
 
 namespace NLog.Targets.Splunk
 {
@@ -19,8 +18,6 @@ namespace NLog.Targets.Splunk
 
         public int RetriesOnError { get; set; } = 0;
 
-        public bool IgnoreSslErrors { get; set; } = false;
-
         protected override void InitializeTarget()
         {
             base.InitializeTarget();
@@ -36,14 +33,14 @@ namespace NLog.Targets.Splunk
             }
 
             _hecSender = new HttpEventCollectorSender(
-                ServerUrl,                                                                              // Splunk HEC URL
-                Token,                                                                                  // Splunk HEC token *GUID*
-                new HttpEventCollectorEventInfo.Metadata(null, null, "_json", Environment.MachineName), // Metadata
-                HttpEventCollectorSender.SendMode.Sequential,                                           // Sequential sending to keep message in order
-                0,                                                                                      // BatchInterval - Set to 0 to disable
-                0,                                                                                      // BatchSizeBytes - Set to 0 to disable
-                0,                                                                                      // BatchSizeCount - Set to 0 to disable
-                new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                           // Resend Middleware with retry
+                ServerUrl,                                                                          // Splunk HEC URL
+                Token,                                                                              // Splunk HEC token *GUID*
+                new HttpEventCollectorEventInfo.Metadata(null, null, "_json", GetMachineName()),    // Metadata
+                HttpEventCollectorSender.SendMode.Sequential,                                       // Sequential sending to keep message in order
+                0,                                                                                  // BatchInterval - Set to 0 to disable
+                0,                                                                                  // BatchSizeBytes - Set to 0 to disable
+                0,                                                                                  // BatchSizeCount - Set to 0 to disable
+                new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
 
             // throw error on send failure
@@ -51,29 +48,14 @@ namespace NLog.Targets.Splunk
             {
                 throw new NLogRuntimeException($"SplunkHttpEventCollector failed to send log event to Splunk server '{ServerUrl?.Authority}' using token '{Token}'. Exception: {exception}");
             };
-
-            // If enabled will create callback to bypass ssl error checks for our server url
-            if (IgnoreSslErrors)
-            {
-                ServicePointManager.ServerCertificateValidationCallback += (sender, certificate, chain, sslPolicyErrors) =>
-                {
-                    var httpWebRequest = sender as HttpWebRequest;
-                    return httpWebRequest?.RequestUri.Authority == ServerUrl.Authority;
-                };
-            }
         }
 
-        protected override void Write(LogEventInfo logEvent)
-        {
-            SendEventToServer(logEvent);
-        }
-
-        private void SendEventToServer(LogEventInfo logEvent)
+        protected override void Write(LogEventInfo logEventInfo)
         {
             // Sanity check for LogEventInfo
-            if (logEvent == null)
+            if (logEventInfo == null)
             {
-                throw new ArgumentNullException(nameof(logEvent));
+                throw new ArgumentNullException(nameof(logEventInfo));
             }
 
             // Make sure we have a properly setup HttpEventCollectorSender
@@ -83,29 +65,45 @@ namespace NLog.Targets.Splunk
             }
 
             // Build metaData
-            var metaData = new HttpEventCollectorEventInfo.Metadata(null, logEvent.LoggerName, "_json", Environment.MachineName);
+            var metaData = new HttpEventCollectorEventInfo.Metadata(null, logEventInfo.LoggerName, "_json", GetMachineName());
 
-            // Build optional data object
-            dynamic objData = null;
+            // Build properties object
+            var properties = new Dictionary<String, object>();
 
-            if (logEvent.Exception != null || logEvent.HasProperties)
+            // Add standard values to properties
+            properties.Add("Source", logEventInfo.LoggerName);
+            properties.Add("Host", GetMachineName());
+
+            // add attached properties
+            if (logEventInfo.HasProperties)
             {
-                objData = new ExpandoObject();
-
-                if (logEvent.Exception != null)
+                foreach (var key in logEventInfo.Properties.Keys)
                 {
-                    objData.Exception = logEvent.Exception;
+                    properties.Add(key.ToString(), logEventInfo.Properties[key]);
                 }
+            }
 
-                if (logEvent.HasProperties)
+            // add parameters
+            if (logEventInfo.Parameters != null && logEventInfo.Parameters.Length > 0)
+            {
+                for(int i = 0; i < logEventInfo.Parameters.Length; i++)
                 {
-                    objData.Properties = logEvent.Properties;
+                    properties.Add("{" + i + "}", logEventInfo.Parameters[i]);
                 }
             }
 
             // Send the event to splunk
-            _hecSender.Send(Guid.NewGuid().ToString(), logEvent.Level.Name, Layout.Render(logEvent), objData, metaData);
+            _hecSender.Send(null, logEventInfo.Level.Name, logEventInfo.Message, logEventInfo.FormattedMessage, logEventInfo.Exception, properties, metaData);
             _hecSender.FlushSync();
+        }
+
+        /// <summary>
+        /// Gets the machine name
+        /// </summary>
+        /// <returns></returns>
+        private string GetMachineName()
+        {
+            return !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("COMPUTERNAME")) ? System.Environment.GetEnvironmentVariable("COMPUTERNAME") : System.Net.Dns.GetHostName();
         }
     }
 }
