@@ -16,8 +16,10 @@ Setup Note: WIll fail to log if using https without a valid SSL cert.</descripti
     <summary>A NLog target for Splunk Http Event Collector (HEC) Sender</summary>
     <releaseNotes>Version 2.0.0-rc
 - Updated to .NET Standard 2.0 with NLog 4.5.0-rc07
+
 Version 1.0.0
  - Code cleanup and performance improvements
+
 Verison 0.0.1
  - First publish to NuGet</releaseNotes>
     <copyright>Copyright (c) 2018 Alan Barber</copyright>
