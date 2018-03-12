@@ -12,7 +12,10 @@
     <iconUrl>https://raw.githubusercontent.com/AlanBarber/NLog.Targets.Splunk/master/docs/nugeticon.png</iconUrl>
     <description>A NLog target for Splunk Http Event Collector (HEC) Sender
 
-Setup Note: WIll fail to log if using https without a valid SSL cert.</description>
+Note(s): 
+ - Setup Note: Will fail to log if using https without a valid SSL cert.
+ - This package uses the NLog.Targets namespace but is NOT an official NLog project package.
+ - Includes modifed code from Splunk.Logging.Common to work with .Net Standard / .Net Core</description>
     <summary>A NLog target for Splunk Http Event Collector (HEC) Sender</summary>
     <releaseNotes>Version 2.0.0-rc
 - Updated to .NET Standard 2.0 with NLog 4.5.0-rc07
@@ -22,7 +25,7 @@ Version 1.0.0
 
 Verison 0.0.1
  - First publish to NuGet</releaseNotes>
-    <copyright>Copyright (c) 2018 Alan Barber</copyright>
+    <copyright>Copyright (c) 2018 Alan Barber, Copyright 2013-2015 Splunk, Inc.</copyright>
     <language>en-US</language>
     <tags>nlog nlog-target splunk splunk-enterprise logging</tags>
     <dependencies>
