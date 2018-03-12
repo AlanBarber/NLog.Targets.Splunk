@@ -20,7 +20,7 @@ namespace NLog.Targets.Splunk.Tests
 
             // Step 3. Set target properties 
             splunkHttpEventCollector.ServerUrl = new Uri("http://localhost:8088");
-            splunkHttpEventCollector.Token = "ED9F5A37-BE9A-4782-B5F7-B6E31AC369CA";
+            splunkHttpEventCollector.Token = "b9e45a2a-1093-4572-9a9d-2ef2baabafb5";
             splunkHttpEventCollector.RetriesOnError = 0;
             splunkHttpEventCollector.Layout = "${message}";
 

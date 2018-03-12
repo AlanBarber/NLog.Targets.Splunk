@@ -42,12 +42,6 @@ namespace NLog.Targets.Splunk
                 0,                                                                                  // BatchSizeCount - Set to 0 to disable
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
-
-            // throw error on send failure
-            _hecSender.OnError += exception =>
-            {
-                throw new NLogRuntimeException($"SplunkHttpEventCollector failed to send log event to Splunk server '{ServerUrl?.Authority}' using token '{Token}'. Exception: {exception}");
-            };
         }
 
         protected override void Write(LogEventInfo logEventInfo)
@@ -67,12 +61,12 @@ namespace NLog.Targets.Splunk
             // Build metaData
             var metaData = new HttpEventCollectorEventInfo.Metadata(null, logEventInfo.LoggerName, "_json", GetMachineName());
 
-            // Build properties object
-            var properties = new Dictionary<String, object>();
-
-            // Add standard values to properties
-            properties.Add("Source", logEventInfo.LoggerName);
-            properties.Add("Host", GetMachineName());
+            // Build properties object and add standard values
+            var properties = new Dictionary<String, object>
+            {
+                {"Source", logEventInfo.LoggerName},
+                { "Host", GetMachineName()}
+            };
 
             // add attached properties
             if (logEventInfo.HasProperties)
