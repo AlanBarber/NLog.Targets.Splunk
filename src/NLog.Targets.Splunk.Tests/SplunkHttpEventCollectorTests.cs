@@ -1,6 +1,8 @@
 ﻿using NLog.Config;
 using System;
+using System.Collections.Generic;
 using System.Dynamic;
+using NLog.MessageTemplates;
 using Xunit;
 
 namespace NLog.Targets.Splunk.Tests
@@ -20,7 +22,7 @@ namespace NLog.Targets.Splunk.Tests
 
             // Step 3. Set target properties 
             splunkHttpEventCollector.ServerUrl = new Uri("http://localhost:8088");
-            splunkHttpEventCollector.Token = "b9e45a2a-1093-4572-9a9d-2ef2baabafb5";
+            splunkHttpEventCollector.Token = "bff36dda-e0fc-4cdd-b2dc-50418ee98ead";
             splunkHttpEventCollector.RetriesOnError = 0;
             splunkHttpEventCollector.Layout = "${message}";
 
@@ -124,6 +126,18 @@ namespace NLog.Targets.Splunk.Tests
             LogEventInfo logEventInfo = new LogEventInfo(LogLevel.Info, this.GetType().Name, "This is an Info log message with custom properties");
             logEventInfo.Properties.Add("Custom Object", CreateTestPropertyObjects());
             _logger.Info(logEventInfo);
+        }
+
+        [Fact]
+        public void SendInfoWithPositionalData()
+        {
+            _logger.Info("This is an Info log message with positional data [{0}, {1}]", "Item 1", "Item 2");
+        }
+
+        [Fact]
+        public void SendInfoWithStructuredData()
+        {
+            _logger.Info("This is an Info log message with structured data [{thing1}, {thing2}]", "Item 1", "Item 2");
         }
 
         [Fact]

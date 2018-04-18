@@ -42,6 +42,12 @@ namespace ConsoleTestApp
             logger.Error("This is an error log message");
             logger.Fatal("This is a fatal log message");
 
+            // Create positional params
+            logger.Info("This is an {0} log message", "info");
+
+            // Crate Structured params
+            logger.Debug("This is a {type} log message", "debug");
+
             // Process an exception
             try
             {

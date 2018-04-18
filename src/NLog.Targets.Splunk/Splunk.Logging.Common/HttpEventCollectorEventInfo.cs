@@ -183,7 +183,7 @@ namespace Splunk.Logging
         /// <param name="datetime">Time value to use.</param>
         /// <param name="id">Event id.</param>
         /// <param name="level">Event severity info.</param>
-        /// <param name="MessageTemplate">Event message template.</param>
+        /// <param name="messageTemplate">Event message template.</param>
         /// <param name="renderedMessage">Event message rendered.</param>
         /// <param name="exception">Event exception.</param>
         /// <param name="properties">Event properties.</param>

@@ -1,13 +1,54 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
+    <Title>NLog for .NET Framework and .NET Standard</Title>
+    <Description>A NLog target for Splunk Http Event Collector (HEC) Sender</Description>
+    <Authors>Alan Barber</Authors>
+    <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
+    <Copyright>Copyright (c) $(CurrentYear) Alan Barber, Copyright 2013-2015 Splunk, Inc. </Copyright>
+    <PackageTags>nlog;nlog-target;splunk;splunk-enterprise;logging</PackageTags>
+    <PackageIconUrl>https://raw.githubusercontent.com/AlanBarber/NLog.Targets.Splunk/master/docs/nugeticon.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/AlanBarber/NLog.Targets.Splunk</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
+    <Version>2.0.0</Version>
+    <PackageReleaseNotes>Version 2.0.0
+- Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
+Version 2.0.0-rc
+- Updated to .NET Standard 2.0 with NLog 4.5.0-rc07
+Version 1.0.0
+- Code cleanup and performance improvements
+Verison 0.0.1
+- First publish to NuGet</PackageReleaseNotes>
   </PropertyGroup>
 
+  <!--common NuGet package refs -->
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
-    <PackageReference Include="NLog" Version="4.5.0-rc07" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="NLog" Version="4.5.3" />
   </ItemGroup>
+
+  <!--.NET Standard 2.0 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <AssemblyTitle>NLog.Targers.Splunk .NET Standard 2.0</AssemblyTitle>
+    <DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
+  </PropertyGroup>
+
+  <!-- .NET 4.5 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)'=='net45' ">
+    <AssemblyTitle>NLog.Targers.Splunk .NET 4.5</AssemblyTitle>
+    <DefineConstants>NET45;NETFULL</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+    <Reference Include="mscorlib" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+   
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>Full</DebugType>
