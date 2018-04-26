@@ -25,6 +25,7 @@ namespace NLog.Targets.Splunk.Tests
             splunkHttpEventCollector.Token = "bff36dda-e0fc-4cdd-b2dc-50418ee98ead";
             splunkHttpEventCollector.RetriesOnError = 0;
             splunkHttpEventCollector.Layout = "${message}";
+            splunkHttpEventCollector.IncludeEventProperties = true;
 
             // Step 4. Define rules
             var rule1 = new LoggingRule("*", LogLevel.Trace, splunkHttpEventCollector);

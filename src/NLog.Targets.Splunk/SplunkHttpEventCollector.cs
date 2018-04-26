@@ -1,23 +1,53 @@
 ﻿using NLog.Config;
 using Splunk.Logging;
 using System;
-using System.Collections.Generic;
 
 namespace NLog.Targets.Splunk
 {
+    /// <summary>
+    /// Splunk Http Event Collector
+    /// </summary>
+    /// <seealso cref="NLog.Targets.TargetWithContext" />
     [Target("SplunkHttpEventCollector")]
-    public sealed class SplunkHttpEventCollector : TargetWithLayout
+    public sealed class SplunkHttpEventCollector : TargetWithContext
     {
         private HttpEventCollectorSender _hecSender;
 
+        /// <summary>
+        /// Gets or sets the Splunk HTTP Event Collector server URL.
+        /// </summary>
+        /// <value>
+        /// The Splunk HTTP Event Collector server URL.
+        /// </value>
         [RequiredParameter]
         public Uri ServerUrl { get; set; }
 
+        /// <summary>
+        /// Gets or sets the Splunk HTTP Event Collector token.
+        /// </summary>
+        /// <value>
+        /// The SPlunk HTTP Event Collector token.
+        /// </value>
         [RequiredParameter]
         public string Token { get; set; }
 
+        /// <summary>
+        /// Gets or sets the number of retries on error.
+        /// </summary>
+        /// <value>
+        /// The number of retries on error.
+        /// </value>
         public int RetriesOnError { get; set; } = 0;
 
+        /// <summary>
+        /// Initializes the target. Can be used by inheriting classes
+        /// to initialize logging.
+        /// </summary>
+        /// <exception cref="NLogConfigurationException">
+        /// SplunkHttpEventCollector ServerUrl is not set!
+        /// or
+        /// SplunkHttpEventCollector Token is not set!
+        /// </exception>
         protected override void InitializeTarget()
         {
             base.InitializeTarget();
@@ -44,6 +74,12 @@ namespace NLog.Targets.Splunk
             );
         }
 
+        /// <summary>
+        /// Writes the specified log event information.
+        /// </summary>
+        /// <param name="logEventInfo">The log event information.</param>
+        /// <exception cref="System.ArgumentNullException">logEventInfo</exception>
+        /// <exception cref="NLogRuntimeException">SplunkHttpEventCollector SendEventToServer() called before InitializeTarget()</exception>
         protected override void Write(LogEventInfo logEventInfo)
         {
             // Sanity check for LogEventInfo
@@ -58,33 +94,12 @@ namespace NLog.Targets.Splunk
                 throw new NLogRuntimeException("SplunkHttpEventCollector SendEventToServer() called before InitializeTarget()");
             }
 
-            // Build metaData
+            // Build MetaData
             var metaData = new HttpEventCollectorEventInfo.Metadata(null, logEventInfo.LoggerName, "_json", GetMachineName());
 
-            // Build properties object and add standard values
-            var properties = new Dictionary<String, object>
-            {
-                {"Source", logEventInfo.LoggerName},
-                { "Host", GetMachineName()}
-            };
-
-            // add attached properties
-            if (logEventInfo.HasProperties)
-            {
-                foreach (var key in logEventInfo.Properties.Keys)
-                {
-                    properties.Add(key.ToString(), logEventInfo.Properties[key]);
-                }
-            }
-
-            // add parameters
-            if (logEventInfo.Parameters != null && logEventInfo.Parameters.Length > 0)
-            {
-                for(int i = 0; i < logEventInfo.Parameters.Length; i++)
-                {
-                    properties.Add("{" + i + "}", logEventInfo.Parameters[i]);
-                }
-            }
+            // Use NLog's built in tooling to get properties
+            // Requires setting IncludeEventProperties="true" in target setup to return any values
+            var properties = GetAllProperties(logEventInfo);
 
             // Send the event to splunk
             _hecSender.Send(null, logEventInfo.Level.Name, logEventInfo.Message, logEventInfo.FormattedMessage, logEventInfo.Exception, properties, metaData);
@@ -97,7 +112,7 @@ namespace NLog.Targets.Splunk
         /// <returns></returns>
         private string GetMachineName()
         {
-            return !string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("COMPUTERNAME")) ? System.Environment.GetEnvironmentVariable("COMPUTERNAME") : System.Net.Dns.GetHostName();
+            return !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("COMPUTERNAME")) ? Environment.GetEnvironmentVariable("COMPUTERNAME") : System.Net.Dns.GetHostName();
         }
     }
 }
