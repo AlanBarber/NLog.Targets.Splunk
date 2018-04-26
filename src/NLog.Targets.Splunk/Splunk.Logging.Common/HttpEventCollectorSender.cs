@@ -100,7 +100,7 @@ namespace Splunk.Logging
         private readonly MediaTypeHeaderValue HttpContentHeaderValue = new MediaTypeHeaderValue("application/json") { CharSet = Encoding.UTF8.WebName };
         private const string HttpEventCollectorPath = "/services/collector/event/1.0";
         private const string AuthorizationHeaderScheme = "Splunk";
-        private Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
+        private readonly Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
         private HttpEventCollectorEventInfo.Metadata metadata; // logger metadata
         private string token; // authorization token
 
@@ -300,16 +300,6 @@ namespace Splunk.Logging
             {
                 FlushSync();
             });
-        }
-
-        /// <summary>
-        /// Serialize event info into a json string
-        /// </summary>
-        /// <param name="eventInfo"></param>
-        /// <returns></returns>
-        public static string SerializeEventInfo(HttpEventCollectorEventInfo eventInfo)
-        {
-            return JsonConvert.SerializeObject(eventInfo);
         }
 
         /// <summary>

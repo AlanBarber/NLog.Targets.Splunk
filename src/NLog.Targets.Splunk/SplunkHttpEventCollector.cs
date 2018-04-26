@@ -1,4 +1,5 @@
-﻿using NLog.Config;
+﻿using NLog.Common;
+using NLog.Config;
 using Splunk.Logging;
 using System;
 using System.Collections.Generic;
@@ -39,6 +40,16 @@ namespace NLog.Targets.Splunk
         /// The number of retries on error.
         /// </value>
         public int RetriesOnError { get; set; } = 0;
+
+        /// <summary>
+        /// Gets or sets the number of bytes to include before sending a batch
+        /// </summary>
+        public int BatchSizeBytes { get; set; } = 0;    // 0 = No batching
+
+        /// <summary>
+        /// Gets or sets the number of logevents to include before sending a batch
+        /// </summary>
+        public int BatchSizeCount { get; set; } = 0;    // 0 = No batching
 
         /// <summary>
         /// Gets or sets whether to include positional parameters
@@ -91,9 +102,9 @@ namespace NLog.Targets.Splunk
                 Token,                                                                              // Splunk HEC token *GUID*
                 GetMetaData(null),                                                                  // Metadata
                 HttpEventCollectorSender.SendMode.Sequential,                                       // Sequential sending to keep message in order
-                0,                                                                                  // BatchInterval - Set to 0 to disable
-                0,                                                                                  // BatchSizeBytes - Set to 0 to disable
-                0,                                                                                  // BatchSizeCount - Set to 0 to disable
+                BatchSizeBytes == 0 && BatchSizeCount == 0 ? 0 : 250,                               // BatchInterval - Set to 0 to disable
+                BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
+                BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
             _hecSender.OnError += (e) => { Common.InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
@@ -136,7 +147,23 @@ namespace NLog.Targets.Splunk
             // Send the event to splunk
             string renderedMessage = RenderLogEvent(Layout, logEventInfo);
             _hecSender.Send(null, logEventInfo.Level.Name, logEventInfo.Message, renderedMessage, logEventInfo.Exception, properties, metaData);
-            _hecSender.FlushSync();
+            if (BatchSizeBytes == 0 && BatchSizeCount == 0)
+            {
+                _hecSender.FlushSync();
+            }
+        }
+
+        protected override void FlushAsync(AsyncContinuation asyncContinuation)
+        {
+            try
+            {
+                _hecSender.FlushSync();
+                asyncContinuation(null);
+            }
+            catch (Exception ex)
+            {
+                asyncContinuation(ex);
+            }
         }
 
         private HttpEventCollectorEventInfo.Metadata GetMetaData(string loggerName)
