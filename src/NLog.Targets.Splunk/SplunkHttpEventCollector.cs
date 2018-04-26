@@ -96,6 +96,7 @@ namespace NLog.Targets.Splunk
                 0,                                                                                  // BatchSizeCount - Set to 0 to disable
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
+            _hecSender.OnError += (e) => { Common.InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
         }
 
         /// <summary>

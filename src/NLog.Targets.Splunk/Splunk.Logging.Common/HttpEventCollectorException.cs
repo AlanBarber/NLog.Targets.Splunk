@@ -17,7 +17,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 
@@ -69,12 +68,21 @@ namespace Splunk.Logging
             string reply = null, 
             HttpResponseMessage response = null,
             string serializedEvents = null)
+            :base($"Failed to send request: {code}", webException)
         {
             this.StatusCode = code;
             this.WebException = webException;
             this.ServerReply = reply;
             this.Response = response;
             this.SerializedEvents = serializedEvents;
+        }
+
+        public override string ToString()
+        {
+            if (Response != null)
+                return string.Concat(base.ToString(), Environment.NewLine, Response.ToString());
+            else
+                return base.ToString();
         }
     }
 }
