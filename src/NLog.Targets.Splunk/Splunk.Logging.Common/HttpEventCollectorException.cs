@@ -17,7 +17,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 
@@ -51,9 +50,9 @@ namespace Splunk.Logging
         public HttpResponseMessage Response { get; private set; }
 
         /// <summary>
-        /// List of events that caused the problem. This value is set by HttpEventCollectorSender.
+        /// JSON Serialized events that caused the problem. This value is set by HttpEventCollectorSender.
         /// </summary>
-        public List<HttpEventCollectorEventInfo> Events { get; set; }
+        public string SerializedEvents { get; internal set; }
 
         /// <summary>
         /// HTTP event collector exception container.
@@ -62,19 +61,28 @@ namespace Splunk.Logging
         /// <param name="webException">Exception thrown by HTTP client when sending the data.</param>
         /// <param name="reply">Splunk server reply.</param>
         /// <param name="response">HTTP response.</param>
-        /// <param name="events">List of events that caused the problem.</param>
+        /// <param name="serializedEvents">JSON Serialized events that caused the problem.</param>
         public HttpEventCollectorException(
             HttpStatusCode code, 
             Exception webException = null, 
             string reply = null, 
             HttpResponseMessage response = null,
-            List<HttpEventCollectorEventInfo> events = null)
+            string serializedEvents = null)
+            :base($"Failed to send request: {code}", webException)
         {
             this.StatusCode = code;
             this.WebException = webException;
             this.ServerReply = reply;
             this.Response = response;
-            this.Events = events;
+            this.SerializedEvents = serializedEvents;
+        }
+
+        public override string ToString()
+        {
+            if (Response != null)
+                return string.Concat(base.ToString(), Environment.NewLine, Response.ToString());
+            else
+                return base.ToString();
         }
     }
 }

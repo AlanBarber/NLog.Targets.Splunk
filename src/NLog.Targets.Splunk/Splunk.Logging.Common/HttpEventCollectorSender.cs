@@ -17,9 +17,7 @@
  */
 
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -64,7 +62,7 @@ namespace Splunk.Logging
         /// <param name="request">HTTP request.</param>
         /// <returns>Server HTTP response.</returns>
         public delegate Task<HttpResponseMessage> HttpEventCollectorHandler(
-            string token, List<HttpEventCollectorEventInfo> events);
+            string token, byte[] serializedEvents);
 
         /// <summary>
         /// HTTP event collector middleware plugin.
@@ -73,7 +71,7 @@ namespace Splunk.Logging
         /// <param name="next">A handler that posts data to the server.</param>
         /// <returns>Server HTTP response.</returns>
         public delegate Task<HttpResponseMessage> HttpEventCollectorMiddleware(
-            string token, List<HttpEventCollectorEventInfo> events, HttpEventCollectorHandler next);
+            string token, byte[] serializedEvents, HttpEventCollectorHandler next);
 
         /// <summary>
         /// Override the default event format.
@@ -99,13 +97,12 @@ namespace Splunk.Logging
             Sequential
         };
 
-        private const string HttpContentTypeMedia = "application/json";
+        private readonly MediaTypeHeaderValue HttpContentHeaderValue = new MediaTypeHeaderValue("application/json") { CharSet = Encoding.UTF8.WebName };
         private const string HttpEventCollectorPath = "/services/collector/event/1.0";
         private const string AuthorizationHeaderScheme = "Splunk";
-        private Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
+        private readonly Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
         private HttpEventCollectorEventInfo.Metadata metadata; // logger metadata
         private string token; // authorization token
-        private JsonSerializer serializer;
 
         // events batching properties and collection 
         private int batchInterval = 0;
@@ -114,8 +111,9 @@ namespace Splunk.Logging
         private SendMode sendMode = SendMode.Parallel;
         private Task activePostTask = null;
         private object eventsBatchLock = new object();
-        private List<HttpEventCollectorEventInfo> eventsBatch = new List<HttpEventCollectorEventInfo>();
-        private StringBuilder serializedEventsBatch = new StringBuilder();
+        private int eventsBatchCount;
+        private readonly System.IO.MemoryStream serializedEventsBatch = new System.IO.MemoryStream();
+        private readonly JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
         private Timer timer;
 
         private HttpClient httpClient = null;
@@ -150,10 +148,6 @@ namespace Splunk.Logging
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
         {
-            this.serializer = new JsonSerializer();
-            serializer.NullValueHandling = NullValueHandling.Ignore;
-            serializer.ContractResolver = new CamelCasePropertyNamesContractResolver();
-
             this.httpEventCollectorEndpointUri = new Uri(uri, HttpEventCollectorPath);
             this.sendMode = sendMode;
             this.batchInterval = batchInterval;
@@ -250,26 +244,29 @@ namespace Splunk.Logging
 
         private void DoSerialization(HttpEventCollectorEventInfo ei)
         {
-            
-            string serializedEventInfo;
-            if (formatter == null)
-            {
-                serializedEventInfo = SerializeEventInfo(ei);
-            }
-            else
+            if (formatter != null)
             {
                 var formattedEvent = formatter(ei);
                 ei.Event = formattedEvent;
-                serializedEventInfo = JsonConvert.SerializeObject(ei);
             }
 
             // we use lock serializedEventsBatch to synchronize both 
             // serializedEventsBatch and serializedEvents
             lock (eventsBatchLock)
             {
-                eventsBatch.Add(ei);
-                serializedEventsBatch.Append(serializedEventInfo);
-                if (eventsBatch.Count >= batchSizeCount ||
+                ++eventsBatchCount;
+
+                using (var writer = new System.IO.StreamWriter(this.serializedEventsBatch, Encoding.UTF8, 1024, leaveOpen: true))
+                {
+                    using (JsonTextWriter jsonWriter = new JsonTextWriter(writer))
+                    {
+                        var serializer = JsonSerializer.Create(this.jsonSerializerSettings);
+                        jsonWriter.Formatting = Formatting.None;
+                        serializer.Serialize(jsonWriter, ei);
+                    }
+                }
+
+                if (eventsBatchCount >= batchSizeCount ||
                     serializedEventsBatch.Length >= batchSizeBytes)
                 {
                     // there are enough events in the batch
@@ -306,16 +303,6 @@ namespace Splunk.Logging
         }
 
         /// <summary>
-        /// Serialize event info into a json string
-        /// </summary>
-        /// <param name="eventInfo"></param>
-        /// <returns></returns>
-        public static string SerializeEventInfo(HttpEventCollectorEventInfo eventInfo)
-        {
-            return JsonConvert.SerializeObject(eventInfo);
-        }
-
-        /// <summary>
         /// Flush all batched events immediately. 
         /// </summary>
         private void Flush()
@@ -330,51 +317,49 @@ namespace Splunk.Logging
         {
             // FlushInternal method is called only in contexts locked on eventsBatchLock  
             // therefore it's thread safe and doesn't need additional synchronization.
-
+            eventsBatchCount = 0;
             if (serializedEventsBatch.Length == 0)
                 return; // there is nothing to send
 
+            // Create batch as new byte-array, so we can reuse the MemoryStream
+            var batchPayload = this.serializedEventsBatch.ToArray();
+
+            this.serializedEventsBatch.Position = 0;
+            this.serializedEventsBatch.SetLength(0);
+
             // flush events according to the system operation mode
             if (this.sendMode == SendMode.Sequential)
-                FlushInternalSequentialMode(this.eventsBatch, this.serializedEventsBatch.ToString());
+                FlushInternalSequentialMode(batchPayload);
             else
-                FlushInternalSingleBatch(this.eventsBatch, this.serializedEventsBatch.ToString());
-
-            // we explicitly create new objects instead to clear and reuse 
-            // the old ones because Flush works in async mode
-            // and can use "previous" containers
-            this.serializedEventsBatch = new StringBuilder();
-            this.eventsBatch = new List<HttpEventCollectorEventInfo>();
+                FlushInternalSingleBatch(batchPayload);
         }
 
         private void FlushInternalSequentialMode(
-            List<HttpEventCollectorEventInfo> events,
-            String serializedEvents)
+            byte[] serializedEvents)
         {
             // post events only after the current post task is done
             if (this.activePostTask == null)
             {
                 this.activePostTask = Task.Factory.StartNew(() =>
                 {
-                    FlushInternalSingleBatch(events, serializedEvents).Wait();
+                    FlushInternalSingleBatch(serializedEvents).Wait();
                 });
             }
             else
             {
                 this.activePostTask = this.activePostTask.ContinueWith((_) =>
                 {
-                    FlushInternalSingleBatch(events, serializedEvents).Wait();
+                    FlushInternalSingleBatch(serializedEvents).Wait();
                 });
             }
         }
 
         private Task<HttpStatusCode> FlushInternalSingleBatch(
-            List<HttpEventCollectorEventInfo> events,
-            String serializedEvents)
+            byte[] serializedEvents)
         {
             // post data and update tasks counter
             Interlocked.Increment(ref activeAsyncTasksCount);
-            Task<HttpStatusCode> task = PostEvents(events, serializedEvents);
+            Task<HttpStatusCode> task = PostEvents(serializedEvents);
             task.ContinueWith((_) =>
             {
                 Interlocked.Decrement(ref activeAsyncTasksCount);            
@@ -383,8 +368,7 @@ namespace Splunk.Logging
         }
 
         private async Task<HttpStatusCode> PostEvents(
-            List<HttpEventCollectorEventInfo> events,
-            String serializedEvents)
+            byte[] serializedEvents)
         {
             // encode data
             HttpResponseMessage response = null;
@@ -393,17 +377,18 @@ namespace Splunk.Logging
             try
             {
                 // post data
-                HttpEventCollectorHandler next = (t, e) =>
+                HttpEventCollectorHandler next = (t, s) =>
                 {
-                    HttpContent content = new StringContent(serializedEvents, Encoding.UTF8, HttpContentTypeMedia);
+                    HttpContent content = new ByteArrayContent(serializedEvents);
+                    content.Headers.ContentType = HttpContentHeaderValue;
                     return httpClient.PostAsync(httpEventCollectorEndpointUri, content);
                 };
-                HttpEventCollectorHandler postEvents = (t, e) =>
+                HttpEventCollectorHandler postEvents = (t, s) =>
                 {
                     return middleware == null ?
-                        next(t, e) : middleware(t, e, next);
+                        next(t, s) : middleware(t, s, next);
                 };
-                response = await postEvents(token, events);
+                response = await postEvents(token, serializedEvents);
                 responseCode = response.StatusCode;
                 if (responseCode != HttpStatusCode.OK && response.Content != null)
                 {
@@ -414,23 +399,25 @@ namespace Splunk.Logging
                         webException: null,
                         reply: serverReply,
                         response: response,
-                        events: events
+                        serializedEvents: Encoding.UTF8.GetString(serializedEvents)
                     ));
                 }
             }
             catch (HttpEventCollectorException e)
             {
-                e.Events = events;
+                responseCode = responseCode == HttpStatusCode.OK ? e.Response.StatusCode : responseCode;
+                e.SerializedEvents = e.SerializedEvents ?? Encoding.UTF8.GetString(serializedEvents);
                 OnError(e);
             }
             catch (Exception e)
-            {                
+            {
+                responseCode = responseCode == HttpStatusCode.OK ? HttpStatusCode.BadRequest : responseCode;
                 OnError(new HttpEventCollectorException(
                     code: responseCode,
                     webException: e,
                     reply: serverReply,
                     response: response,
-                    events: events
+                    serializedEvents: Encoding.UTF8.GetString(serializedEvents)
                 ));
             }
             return responseCode;
@@ -456,6 +443,7 @@ namespace Splunk.Logging
                 return;
             if (disposing)
             {
+                OnError = null;
                 if (timer != null)
                 {
                     timer.Dispose();

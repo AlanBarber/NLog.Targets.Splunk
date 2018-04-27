@@ -67,8 +67,8 @@ namespace Splunk.Logging
         /// <param name="next"></param>
         /// <returns></returns>
         public async Task<HttpResponseMessage> Plugin(
-            string token, 
-            List<HttpEventCollectorEventInfo> events, 
+            string token,
+            byte[] serializedEvents,
             HttpEventCollectorSender.HttpEventCollectorHandler next)
         {          
             HttpResponseMessage response = null;
@@ -81,7 +81,7 @@ namespace Splunk.Logging
             {
                 try
                 {
-                    response = await next(token, events);
+                    response = await next(token, serializedEvents);
                     statusCode = response.StatusCode;
                     if (statusCode == HttpStatusCode.OK)
                     {
@@ -120,7 +120,8 @@ namespace Splunk.Logging
                     code: statusCode,
                     webException: webException,
                     reply: serverReply,
-                    response: response
+                    response: response,
+                    serializedEvents: System.Text.Encoding.UTF8.GetString(serializedEvents)
                 );
             }
             return response;
