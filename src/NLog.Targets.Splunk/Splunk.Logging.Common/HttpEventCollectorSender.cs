@@ -153,6 +153,7 @@ namespace Splunk.Logging
             this.httpEventCollectorEndpointUri = new Uri(uri, HttpEventCollectorPath);
             this.jsonSerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             this.jsonSerializerSettings.Formatting = Formatting.None;
+            this.jsonSerializerSettings.Converters = new[] { new Newtonsoft.Json.Converters.StringEnumConverter() };
             this.jsonSerializer = JsonSerializer.CreateDefault(this.jsonSerializerSettings);
             this.sendMode = sendMode;
             this.batchInterval = batchInterval;
@@ -278,7 +279,7 @@ namespace Splunk.Logging
                     this.serializedEventsBatch.Flush();
                     this.serializedEventsBatch.BaseStream.Position = orgLength;
                     this.serializedEventsBatch.BaseStream.SetLength(orgLength);
-                    this.jsonSerializer = JsonSerializer.CreateDefault(this.jsonSerializerSettings);    // Reset bad state
+                    this.jsonSerializer = JsonSerializer.CreateDefault(this.jsonSerializerSettings);   // Reset bad state
                     throw;
                 }
 
