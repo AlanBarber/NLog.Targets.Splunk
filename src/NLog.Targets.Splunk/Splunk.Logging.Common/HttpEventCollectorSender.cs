@@ -443,6 +443,7 @@ namespace Splunk.Logging
                 return;
             if (disposing)
             {
+                OnError = null;
                 if (timer != null)
                 {
                     timer.Dispose();
