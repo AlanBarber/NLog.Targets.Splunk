@@ -97,7 +97,8 @@ namespace Splunk.Logging
             Sequential
         };
 
-        private readonly MediaTypeHeaderValue HttpContentHeaderValue = new MediaTypeHeaderValue("application/json") { CharSet = Encoding.UTF8.WebName };
+        private static readonly Encoding HttpContentEncoding = new UTF8Encoding(false);
+        private readonly MediaTypeHeaderValue HttpContentHeaderValue = new MediaTypeHeaderValue("application/json") { CharSet = HttpContentEncoding.WebName };
         private const string HttpEventCollectorPath = "/services/collector/event/1.0";
         private const string AuthorizationHeaderScheme = "Splunk";
         private readonly Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
@@ -113,7 +114,7 @@ namespace Splunk.Logging
         private object eventsBatchLock = new object();
         private int eventsBatchCount;
         private readonly System.IO.MemoryStream serializedEventsBatch = new System.IO.MemoryStream();
-        private readonly JsonSerializerSettings jsonSerializerSettings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+        private readonly JsonSerializerSettings jsonSerializerSettings = JsonConvert.DefaultSettings?.Invoke() ?? new JsonSerializerSettings();
         private Timer timer;
 
         private HttpClient httpClient = null;
@@ -149,6 +150,7 @@ namespace Splunk.Logging
             HttpEventCollectorFormatter formatter = null)
         {
             this.httpEventCollectorEndpointUri = new Uri(uri, HttpEventCollectorPath);
+            this.jsonSerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             this.sendMode = sendMode;
             this.batchInterval = batchInterval;
             this.batchSizeBytes = batchSizeBytes;
@@ -256,12 +258,13 @@ namespace Splunk.Logging
             {
                 ++eventsBatchCount;
 
-                using (var writer = new System.IO.StreamWriter(this.serializedEventsBatch, Encoding.UTF8, 1024, leaveOpen: true))
+                using (var writer = new System.IO.StreamWriter(this.serializedEventsBatch, HttpContentEncoding, 128, leaveOpen: true))
                 {
+                    var serializer = JsonSerializer.Create(this.jsonSerializerSettings);
+                    serializer.Formatting = Formatting.None;
                     using (JsonTextWriter jsonWriter = new JsonTextWriter(writer))
                     {
-                        var serializer = JsonSerializer.Create(this.jsonSerializerSettings);
-                        jsonWriter.Formatting = Formatting.None;
+                        jsonWriter.Formatting = serializer.Formatting;
                         serializer.Serialize(jsonWriter, ei);
                     }
                 }
@@ -399,14 +402,14 @@ namespace Splunk.Logging
                         webException: null,
                         reply: serverReply,
                         response: response,
-                        serializedEvents: Encoding.UTF8.GetString(serializedEvents)
+                        serializedEvents: HttpContentEncoding.GetString(serializedEvents)
                     ));
                 }
             }
             catch (HttpEventCollectorException e)
             {
                 responseCode = responseCode == HttpStatusCode.OK ? e.Response.StatusCode : responseCode;
-                e.SerializedEvents = e.SerializedEvents ?? Encoding.UTF8.GetString(serializedEvents);
+                e.SerializedEvents = e.SerializedEvents ?? HttpContentEncoding.GetString(serializedEvents);
                 OnError(e);
             }
             catch (Exception e)
@@ -417,7 +420,7 @@ namespace Splunk.Logging
                     webException: e,
                     reply: serverReply,
                     response: response,
-                    serializedEvents: Encoding.UTF8.GetString(serializedEvents)
+                    serializedEvents: HttpContentEncoding.GetString(serializedEvents)
                 ));
             }
             return responseCode;
