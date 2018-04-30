@@ -113,8 +113,9 @@ namespace Splunk.Logging
         private Task activePostTask = null;
         private object eventsBatchLock = new object();
         private int eventsBatchCount;
-        private readonly System.IO.MemoryStream serializedEventsBatch = new System.IO.MemoryStream();
+        private readonly System.IO.StreamWriter serializedEventsBatch = new System.IO.StreamWriter(new System.IO.MemoryStream(), HttpContentEncoding, 1024, true);
         private readonly JsonSerializerSettings jsonSerializerSettings = JsonConvert.DefaultSettings?.Invoke() ?? new JsonSerializerSettings();
+        private JsonSerializer jsonSerializer;
         private Timer timer;
 
         private HttpClient httpClient = null;
@@ -151,6 +152,9 @@ namespace Splunk.Logging
         {
             this.httpEventCollectorEndpointUri = new Uri(uri, HttpEventCollectorPath);
             this.jsonSerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+            this.jsonSerializerSettings.Formatting = Formatting.None;
+            this.jsonSerializerSettings.Converters = new[] { new Newtonsoft.Json.Converters.StringEnumConverter() };
+            this.jsonSerializer = JsonSerializer.CreateDefault(this.jsonSerializerSettings);
             this.sendMode = sendMode;
             this.batchInterval = batchInterval;
             this.batchSizeBytes = batchSizeBytes;
@@ -258,19 +262,29 @@ namespace Splunk.Logging
             {
                 ++eventsBatchCount;
 
-                using (var writer = new System.IO.StreamWriter(this.serializedEventsBatch, HttpContentEncoding, 128, leaveOpen: true))
+                long orgLength = this.serializedEventsBatch.BaseStream.Length;
+
+                try
                 {
-                    var serializer = JsonSerializer.Create(this.jsonSerializerSettings);
-                    serializer.Formatting = Formatting.None;
-                    using (JsonTextWriter jsonWriter = new JsonTextWriter(writer))
+                    using (JsonTextWriter jsonWriter = new JsonTextWriter(this.serializedEventsBatch))
                     {
-                        jsonWriter.Formatting = serializer.Formatting;
-                        serializer.Serialize(jsonWriter, ei);
+                        jsonWriter.Formatting = this.jsonSerializer.Formatting;
+                        this.jsonSerializer.Serialize(jsonWriter, ei);
                     }
+                    this.serializedEventsBatch.Flush();
+                }
+                catch
+                {
+                    // Unwind / truncate any bad output
+                    this.serializedEventsBatch.Flush();
+                    this.serializedEventsBatch.BaseStream.Position = orgLength;
+                    this.serializedEventsBatch.BaseStream.SetLength(orgLength);
+                    this.jsonSerializer = JsonSerializer.CreateDefault(this.jsonSerializerSettings);   // Reset bad state
+                    throw;
                 }
 
                 if (eventsBatchCount >= batchSizeCount ||
-                    serializedEventsBatch.Length >= batchSizeBytes)
+                    serializedEventsBatch.BaseStream.Length >= batchSizeBytes)
                 {
                     // there are enough events in the batch
                     FlushInternal();
@@ -321,14 +335,14 @@ namespace Splunk.Logging
             // FlushInternal method is called only in contexts locked on eventsBatchLock  
             // therefore it's thread safe and doesn't need additional synchronization.
             eventsBatchCount = 0;
-            if (serializedEventsBatch.Length == 0)
+            if (serializedEventsBatch.BaseStream.Length == 0)
                 return; // there is nothing to send
 
             // Create batch as new byte-array, so we can reuse the MemoryStream
-            var batchPayload = this.serializedEventsBatch.ToArray();
+            var batchPayload = ((System.IO.MemoryStream)this.serializedEventsBatch.BaseStream).ToArray();
 
-            this.serializedEventsBatch.Position = 0;
-            this.serializedEventsBatch.SetLength(0);
+            this.serializedEventsBatch.BaseStream.Position = 0;
+            this.serializedEventsBatch.BaseStream.SetLength(0);
 
             // flush events according to the system operation mode
             if (this.sendMode == SendMode.Sequential)

@@ -43,6 +43,7 @@ namespace NLog.Targets.Splunk.Tests
             obj.Name = "SplunkHttpEventCollector";
             obj.Type = "Nlog.Targets.SplunkHttpEventCollector";
             obj.IsOpenSource = true;
+            obj.Enum = UriFormat.Unescaped;
 
             return obj;
         }
