@@ -57,6 +57,11 @@ namespace NLog.Targets.Splunk
         public bool IncludePositionalParameters { get; set; }
 
         /// <summary>
+        /// Ignore SSL errors when using homemade Ssl Certificates
+        /// </summary>
+        public bool IgnoreSslErrors { get; set; }
+
+        /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
@@ -105,6 +110,7 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes == 0 && BatchSizeCount == 0 ? 0 : 250,                               // BatchInterval - Set to 0 to disable
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
+                IgnoreSslErrors,
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
             _hecSender.OnError += (e) => { InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
