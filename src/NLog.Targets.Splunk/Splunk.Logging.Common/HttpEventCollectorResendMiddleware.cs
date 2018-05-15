@@ -117,7 +117,7 @@ namespace Splunk.Logging
             if (statusCode != HttpStatusCode.OK || webException != null)
             {
                 throw new HttpEventCollectorException(
-                    code: statusCode,
+                    code: statusCode == HttpStatusCode.OK ? HttpStatusCode.InternalServerError : statusCode,
                     webException: webException,
                     reply: serverReply,
                     response: response,

@@ -68,7 +68,7 @@ namespace Splunk.Logging
             string reply = null, 
             HttpResponseMessage response = null,
             string serializedEvents = null)
-            :base($"Failed to send request: {code}", webException)
+            :base(!string.IsNullOrEmpty(reply) ? $"Failed to send request: {code} - {reply}" : $"Failed to send request: {code}", webException)
         {
             this.StatusCode = code;
             this.WebException = webException;
