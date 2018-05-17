@@ -193,31 +193,33 @@ namespace Splunk.Logging
             }
 
             // setup HTTP client
-            if (ignoreSslErrors)
+            try
             {
-                try
-                {
-#if NET45
-                    var httpMessageHandler = new WebRequestHandler();
-                    httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
-#else
-                    var httpMessageHandler = new HttpClientHandler();
-                    httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
-#endif
-                    httpClient = new HttpClient(httpMessageHandler);
-                }
-                catch
-                {
-                    // Fallback on PlatformNotSupported and other funny exceptions
-                    httpClient = new HttpClient();
-                }
+                var httpMessageHandler = ignoreSslErrors ? BuildHttpMessageHandler(ignoreSslErrors) : null;
+                httpClient = httpMessageHandler != null ? new HttpClient(httpMessageHandler) : new HttpClient();
             }
-            else
+            catch
             {
+                // Fallback on PlatformNotSupported and other funny exceptions
                 httpClient = new HttpClient();
             }
+
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+        }
+
+        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors)
+        {
+#if NET45
+            var httpMessageHandler = new WebRequestHandler();
+            if (ignoreSslErrors)
+                httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
+#else
+            var httpMessageHandler = new HttpClientHandler();
+            if (ignoreSslErrors)
+                httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
+#endif
+            return httpMessageHandler;
         }
 
         /// <summary>
