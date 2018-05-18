@@ -21,6 +21,8 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -136,17 +138,19 @@ namespace Splunk.Logging
         /// <param name="batchInterval">Batch interval in milliseconds.</param>
         /// <param name="batchSizeBytes">Batch max size.</param>
         /// <param name="batchSizeCount">Max number of individual events in batch.</param>
+        /// <param name="ignoreSslErrors">Server validation callback should always return true</param>
         /// <param name="middleware">
         /// HTTP client middleware. This allows to plug an HttpClient handler that 
         /// intercepts logging HTTP traffic.
         /// </param>
+        /// <param name="formatter"></param>
         /// <remarks>
         /// Zero values for the batching params mean that batching is off. 
         /// </remarks>
         public HttpEventCollectorSender(
             Uri uri, string token, HttpEventCollectorEventInfo.Metadata metadata,
             SendMode sendMode,
-            int batchInterval, int batchSizeBytes, int batchSizeCount,
+            int batchInterval, int batchSizeBytes, int batchSizeCount, bool ignoreSslErrors,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
         {
@@ -189,9 +193,33 @@ namespace Splunk.Logging
             }
 
             // setup HTTP client
-            httpClient = new HttpClient();
+            try
+            {
+                var httpMessageHandler = ignoreSslErrors ? BuildHttpMessageHandler(ignoreSslErrors) : null;
+                httpClient = httpMessageHandler != null ? new HttpClient(httpMessageHandler) : new HttpClient();
+            }
+            catch
+            {
+                // Fallback on PlatformNotSupported and other funny exceptions
+                httpClient = new HttpClient();
+            }
+
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+        }
+
+        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors)
+        {
+#if NET45
+            var httpMessageHandler = new WebRequestHandler();
+            if (ignoreSslErrors)
+                httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
+#else
+            var httpMessageHandler = new HttpClientHandler();
+            if (ignoreSslErrors)
+                httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
+#endif
+            return httpMessageHandler;
         }
 
         /// <summary>
@@ -422,7 +450,7 @@ namespace Splunk.Logging
             }
             catch (HttpEventCollectorException e)
             {
-                responseCode = responseCode == HttpStatusCode.OK ? e.Response.StatusCode : responseCode;
+                responseCode = responseCode == HttpStatusCode.OK ? (e.Response?.StatusCode ?? e.StatusCode) : responseCode;
                 e.SerializedEvents = e.SerializedEvents ?? HttpContentEncoding.GetString(serializedEvents);
                 OnError(e);
             }
@@ -445,7 +473,19 @@ namespace Splunk.Logging
             Flush();
         }
 
-        #region HttpClientHandler.IDispose
+        private bool IgnoreServerCertificateCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            if (sslPolicyErrors == SslPolicyErrors.None)
+            {
+                return true;
+            }
+
+            var warning = $@"The following certificate errors were encountered when establishing the HTTPS connection to the server: {sslPolicyErrors}, Certificate subject: {certificate.Subject}, Certificate issuer:  {certificate.Issuer}";
+            OnError(new HttpEventCollectorException(HttpStatusCode.NotAcceptable, reply: warning));
+            return true;
+        }
+
+#region HttpClientHandler.IDispose
 
         private bool disposed = false;
 
@@ -475,6 +515,6 @@ namespace Splunk.Logging
             Dispose(false);
         }
 
-        #endregion
+#endregion
     }
 }
