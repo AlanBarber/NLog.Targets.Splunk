@@ -13,8 +13,18 @@
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-    <Version>2.0.0</Version>
-    <PackageReleaseNotes>Version 2.0.0
+    <Version>2.1.0-rc03</Version>
+    <PackageReleaseNotes>Version 2.1.0-rc03
+- Updated NLog version from 4.5.3 to 4.5.4
+Version 2.1.0-rc02
+- Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
+- Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
+Version 2.1.0-rc01
+- updated to work with NLog's paremeter tooling
+- adding abilty to toggle logging of parameters on or off
+- several performance updates
+- Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
+Version 2.0.0
 - Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
 Version 2.0.0-rc
 - Updated to .NET Standard 2.0 with NLog 4.5.0-rc07
@@ -27,7 +37,7 @@ Verison 0.0.1
   <!--common NuGet package refs -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.3" />
+    <PackageReference Include="NLog" Version="4.5.4" />
   </ItemGroup>
 
   <!--.NET Standard 2.0 config -->
