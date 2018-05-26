@@ -222,7 +222,7 @@ namespace NLog.Targets.Splunk
             }
             catch (Exception ex)
             {
-                NLog.Common.InternalLogger.Warn(ex, "SplunkHttpEventCollector(Name={0}): Failed to lookup {1}", lookupType);
+                NLog.Common.InternalLogger.Warn(ex, "SplunkHttpEventCollector: Failed to lookup {0}", lookupType);
                 return null;
             }
         }
