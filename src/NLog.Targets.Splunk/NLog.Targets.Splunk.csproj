@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0</TargetFrameworks>
     <Title>NLog.Targets.Splunk</Title>
-    <Description>A NLog target for Splunk Http Event Collector (HEC) Sender</Description>
+    <Description>A NLog target for Splunk's Http Event Collector (HEC) Sender</Description>
     <Authors>Alan Barber</Authors>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
     <Copyright>Copyright (c) $(CurrentYear) Alan Barber, Copyright 2013-2015 Splunk, Inc. </Copyright>
@@ -13,13 +13,10 @@
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-    <Version>2.1.0-rc03</Version>
-    <PackageReleaseNotes>Version 2.1.0-rc03
-- Updated NLog version from 4.5.3 to 4.5.4
-Version 2.1.0-rc02
+    <Version>2.1.0</Version>
+    <PackageReleaseNotes>Version 2.1.0
+- Updated NLog version from 4.5.3 to 4.5.6
 - Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
-- Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
-Version 2.1.0-rc01
 - updated to work with NLog's paremeter tooling
 - adding abilty to toggle logging of parameters on or off
 - several performance updates
@@ -37,7 +34,7 @@ Verison 0.0.1
   <!--common NuGet package refs -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.4" />
+    <PackageReference Include="NLog" Version="4.5.6" />
   </ItemGroup>
 
   <!--.NET Standard 2.0 config -->
