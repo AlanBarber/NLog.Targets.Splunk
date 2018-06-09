@@ -103,9 +103,11 @@ namespace Splunk.Logging
         private readonly MediaTypeHeaderValue HttpContentHeaderValue = new MediaTypeHeaderValue("application/json") { CharSet = HttpContentEncoding.WebName };
         private const string HttpEventCollectorPath = "/services/collector/event/1.0";
         private const string AuthorizationHeaderScheme = "Splunk";
+        private const string ChannelRequestHeaderName = "X-Splunk-Request-Channel";
         private readonly Uri httpEventCollectorEndpointUri; // HTTP event collector endpoint full uri
         private HttpEventCollectorEventInfo.Metadata metadata; // logger metadata
         private string token; // authorization token
+        private string channel; // data channel
 
         // events batching properties and collection 
         private int batchInterval = 0;
@@ -133,6 +135,7 @@ namespace Splunk.Logging
 
         /// <param name="uri">Splunk server uri, for example https://localhost:8088.</param>
         /// <param name="token">HTTP event collector authorization token.</param>
+        /// <param name="channel">HTTP event collector data channel.</param>
         /// <param name="metadata">Logger metadata.</param>
         /// <param name="sendMode">Send mode of the events.</param>
         /// <param name="batchInterval">Batch interval in milliseconds.</param>
@@ -148,7 +151,7 @@ namespace Splunk.Logging
         /// Zero values for the batching params mean that batching is off. 
         /// </remarks>
         public HttpEventCollectorSender(
-            Uri uri, string token, HttpEventCollectorEventInfo.Metadata metadata,
+            Uri uri, string token, string channel, HttpEventCollectorEventInfo.Metadata metadata,
             SendMode sendMode,
             int batchInterval, int batchSizeBytes, int batchSizeCount, bool ignoreSslErrors,
             HttpEventCollectorMiddleware middleware,
@@ -165,6 +168,7 @@ namespace Splunk.Logging
             this.batchSizeCount = batchSizeCount;
             this.metadata = metadata;
             this.token = token;
+            this.channel = channel;
             this.middleware = middleware;
             this.formatter = formatter;
 
@@ -206,6 +210,11 @@ namespace Splunk.Logging
 
             httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+
+            if (!string.IsNullOrWhiteSpace(channel))
+            {
+                httpClient.DefaultRequestHeaders.Add(ChannelRequestHeaderName, channel);
+            }
         }
 
         private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors)

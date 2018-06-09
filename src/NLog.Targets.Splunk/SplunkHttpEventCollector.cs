@@ -28,10 +28,18 @@ namespace NLog.Targets.Splunk
         /// Gets or sets the Splunk HTTP Event Collector token.
         /// </summary>
         /// <value>
-        /// The SPlunk HTTP Event Collector token.
+        /// The Splunk HTTP Event Collector token.
         /// </value>
         [RequiredParameter]
         public string Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the optional Splunk HTTP Event Collector data channel.
+        /// </summary>
+        /// <value>
+        /// The Splunk HTTP Event Collector data channel.
+        /// </value>
+        public string Channel { get; set; }
 
         /// <summary>
         /// Gets or sets the number of retries on error.
@@ -105,6 +113,7 @@ namespace NLog.Targets.Splunk
             _hecSender = new HttpEventCollectorSender(
                 ServerUrl,                                                                          // Splunk HEC URL
                 Token,                                                                              // Splunk HEC token *GUID*
+                Channel,                                                                            // Splunk HEC data channel *GUID*
                 GetMetaData(null),                                                                  // Metadata
                 HttpEventCollectorSender.SendMode.Sequential,                                       // Sequential sending to keep message in order
                 BatchSizeBytes == 0 && BatchSizeCount == 0 ? 0 : 250,                               // BatchInterval - Set to 0 to disable
