@@ -23,6 +23,7 @@ namespace NLog.Targets.Splunk.Tests
             // Step 3. Set target properties 
             splunkHttpEventCollector.ServerUrl = new Uri("http://localhost:8088");
             splunkHttpEventCollector.Token = "bff36dda-e0fc-4cdd-b2dc-50418ee98ead";
+            splunkHttpEventCollector.Channel = "bff36dda-e0fc-4cdd-b2dc-50418ee98ead";
             splunkHttpEventCollector.RetriesOnError = 0;
 
             // Step 4. Define rules
