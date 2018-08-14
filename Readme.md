@@ -22,12 +22,15 @@ Then configure the SplunkHttpEventCollector with `ServerUrl` and `Token`:
             xsi:type="SplunkHttpEventCollector"
             serverUrl="https://splunk-server:8088"
             token="token-guid"
-			retriesOnError="0"
-			batchSizeBytes="0"
-			batchSizeCount="0"
-			includeEventProperties="true"
-			includeMdlc="false"
-			includePositionalParameters="false">
+            channel="channel-guid"
+            retriesOnError="0"
+            batchSizeBytes="0"
+            batchSizeCount="0"
+            includeEventProperties="true"
+            includeMdlc="false"
+            includePositionalParameters="false"
+	    IgnoreSslErrors="false"
+	    ServicePointManagerProtocols="Ssl3,Tls,Tls11,Tls12">
 		<contextproperty name="host" layout="${machinename}" />
 		<contextproperty name="threadid" layout="${threadid}" />
 		<contextproperty name="logger" layout="${logger}" />
