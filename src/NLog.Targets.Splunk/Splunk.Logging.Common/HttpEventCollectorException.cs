@@ -19,6 +19,7 @@
 using System;
 using System.Net;
 using System.Net.Http;
+// ReSharper disable CheckNamespace
 
 namespace Splunk.Logging
 {
@@ -77,6 +78,12 @@ namespace Splunk.Logging
             this.SerializedEvents = serializedEvents;
         }
 
+        /// <summary>
+        /// Returns a <see cref="System.String" /> that represents this instance.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="System.String" /> that represents this instance.
+        /// </returns>
         public override string ToString()
         {
             if (Response != null)

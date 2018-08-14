@@ -13,8 +13,13 @@
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-    <Version>2.1.0</Version>
-    <PackageReleaseNotes>Version 2.1.0
+	<Version>2.2.0-rc01</Version>
+    <PackageReleaseNotes>
+Version 2.2.0-rc01
+- Updated NLog version from 4.5.6 to 4.5.8
+- Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
+- Adding new optional property 'ServicePointManagerProtocols' to configure used protocols for ServicePointManager.SecurityProtocol
+Version 2.1.0
 - Updated NLog version from 4.5.3 to 4.5.6
 - Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
 - updated to work with NLog's paremeter tooling
@@ -34,18 +39,18 @@ Verison 0.0.1
   <!--common NuGet package refs -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.6" />
+    <PackageReference Include="NLog" Version="4.5.8" />
   </ItemGroup>
 
   <!--.NET Standard 2.0 config -->
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <AssemblyTitle>NLog.Targers.Splunk .NET Standard 2.0</AssemblyTitle>
+    <AssemblyTitle>NLog.Targets.Splunk .NET Standard 2.0</AssemblyTitle>
     <DefineConstants>NETCORE;NETSTANDARD;NETSTANDARD2_0</DefineConstants>
   </PropertyGroup>
 
   <!-- .NET 4.5 config -->
   <PropertyGroup Condition=" '$(TargetFramework)'=='net45' ">
-    <AssemblyTitle>NLog.Targers.Splunk .NET 4.5</AssemblyTitle>
+    <AssemblyTitle>NLog.Targets.Splunk .NET 4.5</AssemblyTitle>
     <DefineConstants>NET45;NETFULL</DefineConstants>
   </PropertyGroup>
 

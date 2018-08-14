@@ -52,22 +52,45 @@ namespace NLog.Targets.Splunk
         /// <summary>
         /// Gets or sets the number of bytes to include before sending a batch
         /// </summary>
+        /// <value>
+        /// The batch size in bytes.
+        /// </value>
         public int BatchSizeBytes { get; set; } = 0;    // 0 = No batching
 
         /// <summary>
         /// Gets or sets the number of logevents to include before sending a batch
         /// </summary>
+        /// <value>
+        /// The batch size count.
+        /// </value>
         public int BatchSizeCount { get; set; } = 0;    // 0 = No batching
 
         /// <summary>
         /// Gets or sets whether to include positional parameters
         /// </summary>
+        /// <value>
+        ///   <c>true</c> if [include positional parameters]; otherwise, <c>false</c>.
+        /// </value>
         public bool IncludePositionalParameters { get; set; }
 
         /// <summary>
         /// Ignore SSL errors when using homemade Ssl Certificates
         /// </summary>
+        /// <value>
+        ///   <c>true</c> if [ignore SSL errors]; otherwise, <c>false</c>.
+        /// </value>
         public bool IgnoreSslErrors { get; set; }
+
+        /// <summary>
+        /// Sets the requested SSL/TLS protocols to support with the service point manager.
+        /// https://msdn.microsoft.com/en-us/library/system.net.servicepointmanager.securityprotocol(v=vs.110).aspx
+        /// Valid values include "Ssl3,Tls,Tls11,Tls12"
+        /// WARNING: This affects the entire app domain and not just the splunk HEC, beware of unintended consequences
+        /// </summary>
+        /// <value>
+        /// The service point manager protocols.
+        /// </value>
+        public string ServicePointManagerProtocols { get; set; }
 
         /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
@@ -78,6 +101,9 @@ namespace NLog.Targets.Splunk
 
         private string _hostName;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SplunkHttpEventCollector"/> class.
+        /// </summary>
         public SplunkHttpEventCollector()
         {
             OptimizeBufferReuse = true;
@@ -97,6 +123,7 @@ namespace NLog.Targets.Splunk
         protected override void InitializeTarget()
         {
             base.InitializeTarget();
+            NLog.Common.InternalLogger.Debug("Initializing SplunkHttpEventCollector");
 
             if (string.IsNullOrEmpty(ServerUrl?.Authority))
             {
@@ -119,7 +146,8 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes == 0 && BatchSizeCount == 0 ? 0 : 250,                               // BatchInterval - Set to 0 to disable
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
-                IgnoreSslErrors,
+                IgnoreSslErrors,                                                                    // Enable Ssl Error ignore for self singed certs *BOOL*
+                ServicePointManagerProtocols,                                                       // Ssl protocol connection types allowed (Ssl3,Tls,Tls11,Tls12)
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
             _hecSender.OnError += (e) => { InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
@@ -169,7 +197,7 @@ namespace NLog.Targets.Splunk
 
             if (IncludePositionalParameters && logEventInfo.Parameters != null)
             {
-                for (int i = 0; i < logEventInfo.Parameters.Length; ++i)
+                for (var i = 0; i < logEventInfo.Parameters.Length; ++i)
                 {
                     properties[string.Concat("{", i.ToString(), "}")] = logEventInfo.Parameters[i];
                 }
@@ -184,6 +212,10 @@ namespace NLog.Targets.Splunk
             }
         }
 
+        /// <summary>
+        /// Flush any pending log messages asynchronously (in case of asynchronous targets).
+        /// </summary>
+        /// <param name="asyncContinuation">The asynchronous continuation.</param>
         protected override void FlushAsync(AsyncContinuation asyncContinuation)
         {
             try
@@ -197,6 +229,11 @@ namespace NLog.Targets.Splunk
             }
         }
 
+        /// <summary>
+        /// Gets the meta data.
+        /// </summary>
+        /// <param name="loggerName">Name of the logger.</param>
+        /// <returns></returns>
         private HttpEventCollectorEventInfo.Metadata GetMetaData(string loggerName)
         {
             var hostName = _hostName ?? (_hostName = GetMachineName());
@@ -222,6 +259,12 @@ namespace NLog.Targets.Splunk
                 ?? TryLookupValue(() => System.Net.Dns.GetHostName(), "DnsHostName");
         }
 
+        /// <summary>
+        /// Tries the lookup value.
+        /// </summary>
+        /// <param name="lookupFunc">The lookup function.</param>
+        /// <param name="lookupType">Type of the lookup.</param>
+        /// <returns></returns>
         private static string TryLookupValue(Func<string> lookupFunc, string lookupType)
         {
             try

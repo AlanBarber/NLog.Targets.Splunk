@@ -19,6 +19,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Globalization;
+// ReSharper disable CheckNamespace
 
 namespace Splunk.Logging
 {
@@ -169,10 +170,11 @@ namespace Splunk.Logging
         /// </summary>
         /// <param name="id">Event id.</param>
         /// <param name="level">Event severity info.</param>
-        /// <param name="MessageTemplate">Event message template.</param>
+        /// <param name="messageTemplate">The message template.</param>
         /// <param name="renderedMessage">Event message rendered.</param>
         /// <param name="exception">Event exception.</param>
         /// <param name="properties">Event properties.</param>
+        /// <param name="metadata">The metadata.</param>
         public HttpEventCollectorEventInfo(string id, string level, string messageTemplate, string renderedMessage, object exception, object properties, Metadata metadata) 
             : this(DateTime.UtcNow, id, level, messageTemplate, renderedMessage, exception, properties, metadata)
         {}
@@ -187,8 +189,8 @@ namespace Splunk.Logging
         /// <param name="renderedMessage">Event message rendered.</param>
         /// <param name="exception">Event exception.</param>
         /// <param name="properties">Event properties.</param>
-        public HttpEventCollectorEventInfo(
-            DateTime datetime, string id, string level, string messageTemplate, string renderedMessage, object exception, object properties, Metadata metadata)
+        /// <param name="metadata">The metadata.</param>
+        public HttpEventCollectorEventInfo(DateTime datetime, string id, string level, string messageTemplate, string renderedMessage, object exception, object properties, Metadata metadata)
         {
             double epochTime = (datetime - new DateTime(1970, 1, 1)).TotalSeconds;
             Timestamp = epochTime.ToString("#.000", CultureInfo.InvariantCulture); // truncate to 3 digits after floating point

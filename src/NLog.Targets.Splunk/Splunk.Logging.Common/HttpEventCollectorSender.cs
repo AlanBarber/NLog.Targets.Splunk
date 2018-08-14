@@ -26,6 +26,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+// ReSharper disable CheckNamespace
 
 namespace Splunk.Logging
 {
@@ -59,19 +60,25 @@ namespace Splunk.Logging
     public class HttpEventCollectorSender : IDisposable
     {
         /// <summary>
-        /// Post request delegate. 
+        /// Post request delegate.
         /// </summary>
-        /// <param name="request">HTTP request.</param>
-        /// <returns>Server HTTP response.</returns>
+        /// <param name="token">The token.</param>
+        /// <param name="serializedEvents">The serialized events.</param>
+        /// <returns>
+        /// Server HTTP response.
+        /// </returns>
         public delegate Task<HttpResponseMessage> HttpEventCollectorHandler(
             string token, byte[] serializedEvents);
 
         /// <summary>
         /// HTTP event collector middleware plugin.
         /// </summary>
-        /// <param name="request">HTTP request.</param>
+        /// <param name="token">The token.</param>
+        /// <param name="serializedEvents">The serialized events.</param>
         /// <param name="next">A handler that posts data to the server.</param>
-        /// <returns>Server HTTP response.</returns>
+        /// <returns>
+        /// Server HTTP response.
+        /// </returns>
         public delegate Task<HttpResponseMessage> HttpEventCollectorMiddleware(
             string token, byte[] serializedEvents, HttpEventCollectorHandler next);
 
@@ -133,6 +140,9 @@ namespace Splunk.Logging
         /// </summary>
         public event Action<HttpEventCollectorException> OnError = (e) => { };
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpEventCollectorSender"/> class.
+        /// </summary>
         /// <param name="uri">Splunk server uri, for example https://localhost:8088.</param>
         /// <param name="token">HTTP event collector authorization token.</param>
         /// <param name="channel">HTTP event collector data channel.</param>
@@ -142,21 +152,23 @@ namespace Splunk.Logging
         /// <param name="batchSizeBytes">Batch max size.</param>
         /// <param name="batchSizeCount">Max number of individual events in batch.</param>
         /// <param name="ignoreSslErrors">Server validation callback should always return true</param>
-        /// <param name="middleware">
-        /// HTTP client middleware. This allows to plug an HttpClient handler that 
-        /// intercepts logging HTTP traffic.
-        /// </param>
-        /// <param name="formatter"></param>
+        /// <param name="ServicePointManagerProtocols">The service point manager protocols.</param>
+        /// <param name="middleware">HTTP client middleware. This allows to plug an HttpClient handler that
+        /// intercepts logging HTTP traffic.</param>
+        /// <param name="formatter">The formatter.</param>
         /// <remarks>
-        /// Zero values for the batching params mean that batching is off. 
+        /// Zero values for the batching params mean that batching is off.
         /// </remarks>
         public HttpEventCollectorSender(
             Uri uri, string token, string channel, HttpEventCollectorEventInfo.Metadata metadata,
             SendMode sendMode,
             int batchInterval, int batchSizeBytes, int batchSizeCount, bool ignoreSslErrors,
+            string ServicePointManagerProtocols,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
         {
+            NLog.Common.InternalLogger.Debug("Initializing Splunk HttpEventCollectorSender");
+
             this.httpEventCollectorEndpointUri = new Uri(uri, HttpEventCollectorPath);
             this.jsonSerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
             this.jsonSerializerSettings.Formatting = Formatting.None;
@@ -208,31 +220,58 @@ namespace Splunk.Logging
                 httpClient = new HttpClient();
             }
 
-            httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+            // setup override for ssl/tls settings
+            if (!string.IsNullOrWhiteSpace(ServicePointManagerProtocols))
+            {
+                NLog.Common.InternalLogger.Debug("Setting valid security protocols - Current: '{0}', Requested: '{1}'", ServicePointManager.SecurityProtocol,ServicePointManagerProtocols);
+                // Remove all protocols
+                ServicePointManager.SecurityProtocol = 0;
+                // parse the list of requested protocols
+                var requestedProtocols = ServicePointManagerProtocols.Replace(" ","").Split(',');
+                foreach (var requestedProtocol in requestedProtocols)
+                {
+                    if (Enum.TryParse(requestedProtocol.Trim(), out SecurityProtocolType securityProtocolType))
+                    {
+                        ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | securityProtocolType;
+                    }
+                }
+            }
 
+            // setup splunk header token
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+
+            // setup splunk channel request header 
             if (!string.IsNullOrWhiteSpace(channel))
             {
                 httpClient.DefaultRequestHeaders.Add(ChannelRequestHeaderName, channel);
             }
         }
 
+        /// <summary>
+        /// Builds the HTTP message handler.
+        /// </summary>
+        /// <param name="ignoreSslErrors">if set to <c>true</c> [ignore SSL errors].</param>
+        /// <returns></returns>
         private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors)
         {
 #if NET45
             var httpMessageHandler = new WebRequestHandler();
             if (ignoreSslErrors)
+            {
                 httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
+            }
 #else
             var httpMessageHandler = new HttpClientHandler();
-            if (ignoreSslErrors)
+            if (ignoreSslErrors) 
+            {
                 httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
+            }
 #endif
             return httpMessageHandler;
         }
 
         /// <summary>
-        /// Send an event to Splunk HTTP endpoint. Actual event send is done 
+        /// Send an event to Splunk HTTP endpoint. Actual event send is done
         /// asynchronously and this method doesn't block client application.
         /// </summary>
         /// <param name="id">Event id.</param>
@@ -251,14 +290,12 @@ namespace Splunk.Logging
             object properties = null,
             HttpEventCollectorEventInfo.Metadata metadataOverride = null)
         {
-            HttpEventCollectorEventInfo ei =
-                new HttpEventCollectorEventInfo(id, level, messageTemplate, renderedMessage, exception, properties, metadataOverride ?? metadata);
-
+            HttpEventCollectorEventInfo ei = new HttpEventCollectorEventInfo(id, level, messageTemplate, renderedMessage, exception, properties, metadataOverride ?? metadata);
             DoSerialization(ei);
         }
 
         /// <summary>
-        /// Send an event to Splunk HTTP endpoint. Actual event send is done 
+        /// Send an event to Splunk HTTP endpoint. Actual event send is done
         /// asynchronously and this method doesn't block client application.
         /// </summary>
         /// <param name="timestamp">Timestamp to use.</param>
@@ -279,12 +316,14 @@ namespace Splunk.Logging
             object properties = null,
             HttpEventCollectorEventInfo.Metadata metadataOverride = null)
         {
-            HttpEventCollectorEventInfo ei =
-                new HttpEventCollectorEventInfo(timestamp, id, level, messageTemplate, renderedMessage, exception, properties, metadataOverride ?? metadata);
-
+            HttpEventCollectorEventInfo ei = new HttpEventCollectorEventInfo(timestamp, id, level, messageTemplate, renderedMessage, exception, properties, metadataOverride ?? metadata);
             DoSerialization(ei);
         }
 
+        /// <summary>
+        /// Does the serialization.
+        /// </summary>
+        /// <param name="ei">The ei.</param>
         private void DoSerialization(HttpEventCollectorEventInfo ei)
         {
             if (formatter != null)
@@ -320,8 +359,7 @@ namespace Splunk.Logging
                     throw;
                 }
 
-                if (eventsBatchCount >= batchSizeCount ||
-                    serializedEventsBatch.BaseStream.Length >= batchSizeBytes)
+                if (eventsBatchCount >= batchSizeCount || serializedEventsBatch.BaseStream.Length >= batchSizeBytes)
                 {
                     // there are enough events in the batch
                     FlushInternal();
@@ -348,6 +386,7 @@ namespace Splunk.Logging
         /// <summary>
         /// Flush all event.
         /// </summary>
+        /// <returns></returns>
         public Task FlushAsync()
         {            
             return new Task(() => 
@@ -357,7 +396,7 @@ namespace Splunk.Logging
         }
 
         /// <summary>
-        /// Flush all batched events immediately. 
+        /// Flush all batched events immediately.
         /// </summary>
         private void Flush()
         {
@@ -365,15 +404,20 @@ namespace Splunk.Logging
             {
                 FlushInternal();
             }
-        }        
+        }
 
+        /// <summary>
+        /// Flushes the internal.
+        /// </summary>
         private void FlushInternal()
         {
             // FlushInternal method is called only in contexts locked on eventsBatchLock  
             // therefore it's thread safe and doesn't need additional synchronization.
             eventsBatchCount = 0;
             if (serializedEventsBatch.BaseStream.Length == 0)
+            {
                 return; // there is nothing to send
+            }
 
             // Create batch as new byte-array, so we can reuse the MemoryStream
             var batchPayload = ((System.IO.MemoryStream)this.serializedEventsBatch.BaseStream).ToArray();
@@ -383,11 +427,19 @@ namespace Splunk.Logging
 
             // flush events according to the system operation mode
             if (this.sendMode == SendMode.Sequential)
+            {
                 FlushInternalSequentialMode(batchPayload);
+            }
             else
+            {
                 FlushInternalSingleBatch(batchPayload);
+            }
         }
 
+        /// <summary>
+        /// Flushes the internal sequential mode.
+        /// </summary>
+        /// <param name="serializedEvents">The serialized events.</param>
         private void FlushInternalSequentialMode(
             byte[] serializedEvents)
         {
@@ -408,6 +460,11 @@ namespace Splunk.Logging
             }
         }
 
+        /// <summary>
+        /// Flushes the internal single batch.
+        /// </summary>
+        /// <param name="serializedEvents">The serialized events.</param>
+        /// <returns></returns>
         private Task<HttpStatusCode> FlushInternalSingleBatch(
             byte[] serializedEvents)
         {
@@ -421,6 +478,11 @@ namespace Splunk.Logging
             return task;
         }
 
+        /// <summary>
+        /// Posts the events.
+        /// </summary>
+        /// <param name="serializedEvents">The serialized events.</param>
+        /// <returns></returns>
         private async Task<HttpStatusCode> PostEvents(
             byte[] serializedEvents)
         {
@@ -477,11 +539,23 @@ namespace Splunk.Logging
             return responseCode;
         }
 
+        /// <summary>
+        /// Called when [timer].
+        /// </summary>
+        /// <param name="state">The state.</param>
         private void OnTimer(object state)
         {
             Flush();
         }
 
+        /// <summary>
+        /// Ignores the server certificate callback.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="certificate">The certificate.</param>
+        /// <param name="chain">The chain.</param>
+        /// <param name="sslPolicyErrors">The SSL policy errors.</param>
+        /// <returns></returns>
         private bool IgnoreServerCertificateCallback(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             if (sslPolicyErrors == SslPolicyErrors.None)
@@ -498,15 +572,24 @@ namespace Splunk.Logging
 
         private bool disposed = false;
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
         }
 
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             if (disposed)
+            {
                 return;
+            }
             if (disposing)
             {
                 OnError = null;
@@ -519,6 +602,9 @@ namespace Splunk.Logging
             disposed = true;
         }
 
+        /// <summary>
+        /// Finalizes an instance of the <see cref="HttpEventCollectorSender"/> class.
+        /// </summary>
         ~HttpEventCollectorSender()
         {
             Dispose(false);
