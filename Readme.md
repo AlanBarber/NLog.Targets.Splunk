@@ -29,8 +29,7 @@ Then configure the SplunkHttpEventCollector with `ServerUrl` and `Token`:
             includeEventProperties="true"
             includeMdlc="false"
             includePositionalParameters="false"
-	    IgnoreSslErrors="false"
-	    ServicePointManagerProtocols="Ssl3,Tls,Tls11,Tls12">
+	    IgnoreSslErrors="false">
 		<contextproperty name="host" layout="${machinename}" />
 		<contextproperty name="threadid" layout="${threadid}" />
 		<contextproperty name="logger" layout="${logger}" />

@@ -13,12 +13,10 @@
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-	<Version>2.2.0-rc01</Version>
-    <PackageReleaseNotes>
-Version 2.2.0-rc01
-- Updated NLog version from 4.5.6 to 4.5.8
+	<Version>2.2.0</Version>
+    <PackageReleaseNotes>Version 2.2.0
+- Updated NLog version from 4.5.6 to 4.5.9
 - Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
-- Adding new optional property 'ServicePointManagerProtocols' to configure used protocols for ServicePointManager.SecurityProtocol
 Version 2.1.0
 - Updated NLog version from 4.5.3 to 4.5.6
 - Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
@@ -28,8 +26,6 @@ Version 2.1.0
 - Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
 Version 2.0.0
 - Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
-Version 2.0.0-rc
-- Updated to .NET Standard 2.0 with NLog 4.5.0-rc07
 Version 1.0.0
 - Code cleanup and performance improvements
 Verison 0.0.1
@@ -39,7 +35,7 @@ Verison 0.0.1
   <!--common NuGet package refs -->
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.8" />
+    <PackageReference Include="NLog" Version="4.5.9" />
   </ItemGroup>
 
   <!--.NET Standard 2.0 config -->

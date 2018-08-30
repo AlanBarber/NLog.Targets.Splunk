@@ -152,7 +152,6 @@ namespace Splunk.Logging
         /// <param name="batchSizeBytes">Batch max size.</param>
         /// <param name="batchSizeCount">Max number of individual events in batch.</param>
         /// <param name="ignoreSslErrors">Server validation callback should always return true</param>
-        /// <param name="ServicePointManagerProtocols">The service point manager protocols.</param>
         /// <param name="middleware">HTTP client middleware. This allows to plug an HttpClient handler that
         /// intercepts logging HTTP traffic.</param>
         /// <param name="formatter">The formatter.</param>
@@ -160,10 +159,15 @@ namespace Splunk.Logging
         /// Zero values for the batching params mean that batching is off.
         /// </remarks>
         public HttpEventCollectorSender(
-            Uri uri, string token, string channel, HttpEventCollectorEventInfo.Metadata metadata,
+            Uri uri, 
+            string token, 
+            string channel, 
+            HttpEventCollectorEventInfo.Metadata metadata,
             SendMode sendMode,
-            int batchInterval, int batchSizeBytes, int batchSizeCount, bool ignoreSslErrors,
-            string ServicePointManagerProtocols,
+            int batchInterval, 
+            int batchSizeBytes, 
+            int batchSizeCount, 
+            bool ignoreSslErrors,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
         {
@@ -218,23 +222,6 @@ namespace Splunk.Logging
             {
                 // Fallback on PlatformNotSupported and other funny exceptions
                 httpClient = new HttpClient();
-            }
-
-            // setup override for ssl/tls settings
-            if (!string.IsNullOrWhiteSpace(ServicePointManagerProtocols))
-            {
-                NLog.Common.InternalLogger.Debug("Setting valid security protocols - Current: '{0}', Requested: '{1}'", ServicePointManager.SecurityProtocol,ServicePointManagerProtocols);
-                // Remove all protocols
-                ServicePointManager.SecurityProtocol = 0;
-                // parse the list of requested protocols
-                var requestedProtocols = ServicePointManagerProtocols.Replace(" ","").Split(',');
-                foreach (var requestedProtocol in requestedProtocols)
-                {
-                    if (Enum.TryParse(requestedProtocol.Trim(), out SecurityProtocolType securityProtocolType))
-                    {
-                        ServicePointManager.SecurityProtocol = ServicePointManager.SecurityProtocol | securityProtocolType;
-                    }
-                }
             }
 
             // setup splunk header token

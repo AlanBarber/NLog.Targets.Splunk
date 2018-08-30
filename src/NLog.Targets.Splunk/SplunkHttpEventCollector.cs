@@ -82,17 +82,6 @@ namespace NLog.Targets.Splunk
         public bool IgnoreSslErrors { get; set; }
 
         /// <summary>
-        /// Sets the requested SSL/TLS protocols to support with the service point manager.
-        /// https://msdn.microsoft.com/en-us/library/system.net.servicepointmanager.securityprotocol(v=vs.110).aspx
-        /// Valid values include "Ssl3,Tls,Tls11,Tls12"
-        /// WARNING: This affects the entire app domain and not just the splunk HEC, beware of unintended consequences
-        /// </summary>
-        /// <value>
-        /// The service point manager protocols.
-        /// </value>
-        public string ServicePointManagerProtocols { get; set; }
-
-        /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
@@ -147,7 +136,6 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
                 IgnoreSslErrors,                                                                    // Enable Ssl Error ignore for self singed certs *BOOL*
-                ServicePointManagerProtocols,                                                       // Ssl protocol connection types allowed (Ssl3,Tls,Tls11,Tls12)
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
             _hecSender.OnError += (e) => { InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
