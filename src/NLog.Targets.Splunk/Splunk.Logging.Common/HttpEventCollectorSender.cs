@@ -168,6 +168,7 @@ namespace Splunk.Logging
             int batchSizeBytes, 
             int batchSizeCount, 
             bool ignoreSslErrors,
+            int maxConnectionsPerServer,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
         {
@@ -215,7 +216,7 @@ namespace Splunk.Logging
             // setup HTTP client
             try
             {
-                var httpMessageHandler = ignoreSslErrors ? BuildHttpMessageHandler(ignoreSslErrors) : null;
+                var httpMessageHandler = ignoreSslErrors ? BuildHttpMessageHandler(ignoreSslErrors, maxConnectionsPerServer) : null;
                 httpClient = httpMessageHandler != null ? new HttpClient(httpMessageHandler) : new HttpClient();
             }
             catch
@@ -239,9 +240,10 @@ namespace Splunk.Logging
         /// </summary>
         /// <param name="ignoreSslErrors">if set to <c>true</c> [ignore SSL errors].</param>
         /// <returns></returns>
-        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors)
+        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors, int maxConnectionsPerServer)
         {
 #if NET45
+            
             var httpMessageHandler = new WebRequestHandler();
             if (ignoreSslErrors)
             {
@@ -252,6 +254,10 @@ namespace Splunk.Logging
             if (ignoreSslErrors) 
             {
                 httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
+            }
+            if (maxConnectionsPerServer > 0)
+            {
+                httpMessageHandler.MaxConnectionsPerServer = maxConnectionsPerServer;
             }
 #endif
             return httpMessageHandler;
