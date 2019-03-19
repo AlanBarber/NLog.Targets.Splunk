@@ -82,6 +82,12 @@ namespace NLog.Targets.Splunk
         public bool IgnoreSslErrors { get; set; }
 
         /// <summary>
+        /// Gets or sets the maximum number of concurrent connections (per server endpoint) allowed when making requests
+        /// </summary>
+        /// <value>0 = Use default limit. Default = 10</value>
+        public int MaxConnectionsPerServer { get; set; } = 10;
+
+        /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
@@ -136,6 +142,7 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
                 IgnoreSslErrors,                                                                    // Enable Ssl Error ignore for self singed certs *BOOL*
+                MaxConnectionsPerServer,
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin                       // Resend Middleware with retry
             );
             _hecSender.OnError += (e) => { InternalLogger.Error(e, "SplunkHttpEventCollector(Name={0}): Failed to send LogEvents", Name); };
