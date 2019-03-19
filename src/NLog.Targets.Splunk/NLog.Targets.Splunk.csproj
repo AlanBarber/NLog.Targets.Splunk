@@ -13,8 +13,10 @@
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-	<Version>2.2.0</Version>
-    <PackageReleaseNotes>Version 2.2.0
+	<Version>2.2.1</Version>
+    <PackageReleaseNotes>Verison 2.2.1
+- Introduced MaxConnectionsPerServer property to limit number of connections to splunk server by Rolf Kristensen (https://github.com/snakefoot)
+Version 2.2.0
 - Updated NLog version from 4.5.6 to 4.5.9
 - Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
 Version 2.1.0
