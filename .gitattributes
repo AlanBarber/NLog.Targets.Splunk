@@ -1,0 +1,3 @@
+docs/* linguist-documentation
+src/AspNetCoreWebApp/* linguist-detectable=false
+src/ConsoleTestApp/* linguist-detectable=false
