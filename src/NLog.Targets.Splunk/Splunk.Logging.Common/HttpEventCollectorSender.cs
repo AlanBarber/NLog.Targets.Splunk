@@ -134,6 +134,7 @@ namespace Splunk.Logging
         private HttpEventCollectorFormatter formatter = null;
         // counter for bookkeeping the async tasks 
         private long activeAsyncTasksCount = 0;
+        private bool applyHttpVersion10Hack = false;
 
         /// <summary>
         /// On error callbacks.
@@ -170,7 +171,8 @@ namespace Splunk.Logging
             bool ignoreSslErrors,
             int maxConnectionsPerServer,
             HttpEventCollectorMiddleware middleware,
-            HttpEventCollectorFormatter formatter = null)
+            HttpEventCollectorFormatter formatter = null,
+            bool httpVersion10Hack = false)
         {
             NLog.Common.InternalLogger.Debug("Initializing Splunk HttpEventCollectorSender");
 
@@ -188,6 +190,7 @@ namespace Splunk.Logging
             this.channel = channel;
             this.middleware = middleware;
             this.formatter = formatter;
+            this.applyHttpVersion10Hack = httpVersion10Hack;
 
             // special case - if batch interval is specified without size and count
             // they are set to "infinity", i.e., batch may have any size 
@@ -227,6 +230,13 @@ namespace Splunk.Logging
 
             // setup splunk header token
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);
+
+            if (this.applyHttpVersion10Hack)
+            {
+                httpClient.BaseAddress = uri;
+                httpClient.DefaultRequestHeaders.ConnectionClose = false;
+                httpClient.DefaultRequestHeaders.Add("Connection", "keep-alive");
+            }
 
             // setup splunk channel request header 
             if (!string.IsNullOrWhiteSpace(channel))
@@ -490,6 +500,16 @@ namespace Splunk.Logging
                 {
                     HttpContent content = new ByteArrayContent(serializedEvents);
                     content.Headers.ContentType = HttpContentHeaderValue;
+
+                    if (this.applyHttpVersion10Hack)
+                    {
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, HttpEventCollectorPath);
+                        request.Version = HttpVersion.Version10;
+                        request.Content = content;
+
+                        return httpClient.SendAsync(request);
+                    }
+
                     return httpClient.PostAsync(httpEventCollectorEndpointUri, content);
                 };
                 HttpEventCollectorHandler postEvents = (t, s) =>
