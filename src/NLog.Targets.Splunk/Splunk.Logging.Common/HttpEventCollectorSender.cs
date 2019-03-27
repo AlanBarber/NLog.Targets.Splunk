@@ -152,6 +152,7 @@ namespace Splunk.Logging
         /// <param name="batchSizeBytes">Batch max size.</param>
         /// <param name="batchSizeCount">Max number of individual events in batch.</param>
         /// <param name="ignoreSslErrors">Server validation callback should always return true</param>
+        /// <param name="useProxy">Default web proxy is used if set to true; otherwise, no proxy is used</param>
         /// <param name="middleware">HTTP client middleware. This allows to plug an HttpClient handler that
         /// intercepts logging HTTP traffic.</param>
         /// <param name="formatter">The formatter.</param>
@@ -168,6 +169,7 @@ namespace Splunk.Logging
             int batchSizeBytes, 
             int batchSizeCount, 
             bool ignoreSslErrors,
+            bool useProxy,
             int maxConnectionsPerServer,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null)
@@ -216,8 +218,8 @@ namespace Splunk.Logging
             // setup HTTP client
             try
             {
-                var httpMessageHandler = ignoreSslErrors ? BuildHttpMessageHandler(ignoreSslErrors, maxConnectionsPerServer) : null;
-                httpClient = httpMessageHandler != null ? new HttpClient(httpMessageHandler) : new HttpClient();
+                var httpMessageHandler = BuildHttpMessageHandler(ignoreSslErrors, useProxy, maxConnectionsPerServer);
+                httpClient = new HttpClient(httpMessageHandler);
             }
             catch
             {
@@ -240,7 +242,7 @@ namespace Splunk.Logging
         /// </summary>
         /// <param name="ignoreSslErrors">if set to <c>true</c> [ignore SSL errors].</param>
         /// <returns></returns>
-        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors, int maxConnectionsPerServer)
+        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors, bool useProxy, int maxConnectionsPerServer)
         {
 #if NET45
             
@@ -249,12 +251,17 @@ namespace Splunk.Logging
             {
                 httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
             }
+
+            httpMessageHandler.UseProxy = useProxy;
 #else
             var httpMessageHandler = new HttpClientHandler();
             if (ignoreSslErrors) 
             {
                 httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
             }
+
+            httpMessageHandler.UseProxy = useProxy;
+
             if (maxConnectionsPerServer > 0)
             {
                 httpMessageHandler.MaxConnectionsPerServer = maxConnectionsPerServer;
