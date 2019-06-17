@@ -90,6 +90,14 @@ namespace NLog.Targets.Splunk
         public bool UseHttpVersion10Hack { get; set; } = false;
 
         /// <summary>
+        /// Gets or sets whether to use default web proxy.
+        /// </summary>
+        /// <value>
+        /// <c>true</c> = use default web proxy. <c>false</c> = use no proxy. Default is <c>true</c> 
+        /// </value>
+        public bool UseProxy { get; set; } = true;
+
+        /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
@@ -144,6 +152,7 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
                 IgnoreSslErrors,                                                                    // Enable Ssl Error ignore for self singed certs *BOOL*
+                UseProxy,                                                                           // UseProxy - Set to false to disable
                 MaxConnectionsPerServer,
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin,                      // Resend Middleware with retry
                 httpVersion10Hack: UseHttpVersion10Hack
