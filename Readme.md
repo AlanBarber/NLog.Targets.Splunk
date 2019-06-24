@@ -42,6 +42,32 @@ Then configure the SplunkHttpEventCollector with `ServerUrl` and `Token`:
 </nlog>
 ```
 
+## Using Values from App-Settings.Json in your splunk target
+```json
+{
+  //appsettings.json
+  "Logging": {
+    "IncludeScopes": false,
+    "LogLevel": {
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "Information"
+    }
+  },
+  "Splunk": {
+    "Token": "token-guid",
+    "Server": "https://splunk-server:8088"
+  },
+  ...
+```
+```xml
+  <target name="Splunk"
+                xsi:type="SplunkHttpEventCollector"
+                serverUrl="${configsetting:name=Splunk.Server:default=String}"
+                token="${configsetting:name=Splunk.Token:default=String}"
+                ...
+```
+
 ## Feedback / Issues
 
 Feel free to tweet [@alanbarber](http://twitter.com/alanbarber) for questions or comments on the code.  
