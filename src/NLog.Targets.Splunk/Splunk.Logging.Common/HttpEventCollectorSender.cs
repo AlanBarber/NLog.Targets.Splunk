@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @copyright
  *
  * Copyright 2013-2015 Splunk, Inc.
@@ -170,7 +170,7 @@ namespace Splunk.Logging
             int batchSizeBytes, 
             int batchSizeCount, 
             bool ignoreSslErrors,
-            bool useProxy,
+            ProxyConfiguration proxy,
             int maxConnectionsPerServer,
             HttpEventCollectorMiddleware middleware,
             HttpEventCollectorFormatter formatter = null,
@@ -221,7 +221,7 @@ namespace Splunk.Logging
             // setup HTTP client
             try
             {
-                var httpMessageHandler = BuildHttpMessageHandler(ignoreSslErrors, useProxy, maxConnectionsPerServer);
+                var httpMessageHandler = BuildHttpMessageHandler(ignoreSslErrors, proxy, maxConnectionsPerServer);
                 httpClient = new HttpClient(httpMessageHandler);
             }
             catch
@@ -251,8 +251,9 @@ namespace Splunk.Logging
         /// Builds the HTTP message handler.
         /// </summary>
         /// <param name="ignoreSslErrors">if set to <c>true</c> [ignore SSL errors].</param>
+        /// <param name="proxy">ProxyConfiguration</param>
         /// <returns></returns>
-        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors, bool useProxy, int maxConnectionsPerServer)
+        private HttpMessageHandler BuildHttpMessageHandler(bool ignoreSslErrors, ProxyConfiguration proxy, int maxConnectionsPerServer)
         {
 #if NET45
             
@@ -262,7 +263,6 @@ namespace Splunk.Logging
                 httpMessageHandler.ServerCertificateValidationCallback = IgnoreServerCertificateCallback;
             }
 
-            httpMessageHandler.UseProxy = useProxy;
 #else
             var httpMessageHandler = new HttpClientHandler();
             if (ignoreSslErrors) 
@@ -270,13 +270,20 @@ namespace Splunk.Logging
                 httpMessageHandler.ServerCertificateCustomValidationCallback = (msg, cert, chain, errors) => IgnoreServerCertificateCallback(msg, cert, chain, errors);
             }
 
-            httpMessageHandler.UseProxy = useProxy;
-
             if (maxConnectionsPerServer > 0)
             {
                 httpMessageHandler.MaxConnectionsPerServer = maxConnectionsPerServer;
             }
 #endif
+            httpMessageHandler.UseProxy = proxy.UseProxy;
+            if (proxy.UseProxy && !string.IsNullOrWhiteSpace(proxy.ProxyUrl))
+            {
+                httpMessageHandler.Proxy = new WebProxy(new Uri(proxy.ProxyUrl));
+                if (!String.IsNullOrWhiteSpace(proxy.ProxyUser) && !String.IsNullOrWhiteSpace(proxy.ProxyPassword))
+                {
+                    httpMessageHandler.Proxy.Credentials = new NetworkCredential(proxy.ProxyUser, proxy.ProxyPassword);
+                }
+            }
             return httpMessageHandler;
         }
 

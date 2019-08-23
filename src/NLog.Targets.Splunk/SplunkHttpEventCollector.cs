@@ -98,6 +98,23 @@ namespace NLog.Targets.Splunk
         public bool UseProxy { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets Proxy URL
+        /// <value>Default is empty. URL must include protocol and port, i.e. <code>http://proxy:5555/</code>.
+        /// If no URL specified, the default system proxy will be used, unless UseProxy is set to false.</value>
+        /// </summary>
+        public string ProxyUrl { get; set; } = String.Empty;
+
+        /// <summary>
+        /// Gets or set user name to use for authentication with proxy
+        /// </summary>
+        public string ProxyUser { get; set; } = String.Empty;
+
+        /// <summary>
+        /// Gets or sets user password to use for authentication with proxy
+        /// </summary>
+        public String ProxyPassword { get; set; } = String.Empty;
+
+        /// <summary>
         /// Configuration of additional properties to include with each LogEvent (Ex. ${logger}, ${machinename}, ${threadid} etc.)
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
@@ -141,7 +158,12 @@ namespace NLog.Targets.Splunk
             }
 
             _metaData.Clear();
-
+            var proxyConfig = UseProxy
+                ? new ProxyConfiguration
+                {
+                    ProxyUrl = ProxyUrl, ProxyUser = ProxyUser, ProxyPassword = ProxyPassword
+                }
+                : new ProxyConfiguration{UseProxy = false}; 
             _hecSender = new HttpEventCollectorSender(
                 ServerUrl,                                                                          // Splunk HEC URL
                 Token,                                                                              // Splunk HEC token *GUID*
@@ -152,7 +174,7 @@ namespace NLog.Targets.Splunk
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
                 BatchSizeCount,                                                                     // BatchSizeCount - Set to 0 to disable
                 IgnoreSslErrors,                                                                    // Enable Ssl Error ignore for self singed certs *BOOL*
-                UseProxy,                                                                           // UseProxy - Set to false to disable
+                proxyConfig,                                                                           // UseProxy - Set to false to disable
                 MaxConnectionsPerServer,
                 new HttpEventCollectorResendMiddleware(RetriesOnError).Plugin,                      // Resend Middleware with retry
                 httpVersion10Hack: UseHttpVersion10Hack
