@@ -29,12 +29,16 @@ Then configure the SplunkHttpEventCollector with `ServerUrl` and `Token`:
             includeEventProperties="true"
             includeMdlc="false"
             includePositionalParameters="false"
-	    MaxConnectionsPerServer="10"
-	    IgnoreSslErrors="false">
-		<contextproperty name="host" layout="${machinename}" />
-		<contextproperty name="threadid" layout="${threadid}" />
-		<contextproperty name="logger" layout="${logger}" />
-	</target>    
+            MaxConnectionsPerServer="10"
+            IgnoreSslErrors="false"
+            UseProxy="true"
+            ProxyUrl="http://proxy:8888"
+            ProxyUser="username"
+            ProxyPassword="secret">
+    <contextproperty name="host" layout="${machinename}" />
+    <contextproperty name="threadid" layout="${threadid}" />
+    <contextproperty name="logger" layout="${logger}" />
+  </target>
   </targets>
   <rules>
     <logger name="*" minlevel="Debug" writeTo="Splunk" />
