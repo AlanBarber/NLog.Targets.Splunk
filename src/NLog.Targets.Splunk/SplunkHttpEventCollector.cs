@@ -1,5 +1,6 @@
 ﻿using NLog.Common;
 using NLog.Config;
+using NLog.Layouts;
 using Splunk.Logging;
 using System;
 using System.Collections.Generic;
@@ -22,7 +23,7 @@ namespace NLog.Targets.Splunk
         /// The Splunk HTTP Event Collector server URL.
         /// </value>
         [RequiredParameter]
-        public Uri ServerUrl { get; set; }
+        public Layout ServerUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the Splunk HTTP Event Collector token.
@@ -31,7 +32,31 @@ namespace NLog.Targets.Splunk
         /// The Splunk HTTP Event Collector token.
         /// </value>
         [RequiredParameter]
-        public string Token { get; set; }
+        public Layout Token { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Splunk source type metadata.
+        /// </summary>
+        /// <value>
+        /// The Splunk metadata source type.
+        /// </value>
+        public Layout SourceType { get; set; } = "_json";
+
+        /// <summary>
+        /// Gets or sets the Splunk source metadata.
+        /// </summary>
+        /// <value>
+        /// The Splunk metadata source.
+        /// </value>
+        public Layout Source { get; set; } = "${logger}";
+
+        /// <summary>
+        /// Gets or sets the Splunk  index metadata.
+        /// </summary>
+        /// <value>
+        /// The Splunk metadata index.
+        /// </value>
+        public Layout Index { get; set; }
 
         /// <summary>
         /// Gets or sets the optional Splunk HTTP Event Collector data channel.
@@ -39,7 +64,7 @@ namespace NLog.Targets.Splunk
         /// <value>
         /// The Splunk HTTP Event Collector data channel.
         /// </value>
-        public string Channel { get; set; }
+        public Layout Channel { get; set; }
 
         /// <summary>
         /// Gets or sets the number of retries on error.
@@ -102,7 +127,7 @@ namespace NLog.Targets.Splunk
         /// </summary>
         public override IList<TargetPropertyWithContext> ContextProperties { get; } = new List<TargetPropertyWithContext>();
 
-        Dictionary<string, HttpEventCollectorEventInfo.Metadata> _metaData = new Dictionary<string, HttpEventCollectorEventInfo.Metadata>();
+        private readonly Dictionary<string, HttpEventCollectorEventInfo.Metadata> _metaData = new Dictionary<string, HttpEventCollectorEventInfo.Metadata>();
 
         private string _hostName;
 
@@ -130,23 +155,30 @@ namespace NLog.Targets.Splunk
             base.InitializeTarget();
             NLog.Common.InternalLogger.Debug("Initializing SplunkHttpEventCollector");
 
-            if (string.IsNullOrEmpty(ServerUrl?.Authority))
+            _metaData.Clear();
+
+            var serverUri = RenderLogEvent(ServerUrl, LogEventInfo.CreateNullEvent());
+            if (string.IsNullOrEmpty(serverUri))
             {
                 throw new NLogConfigurationException("SplunkHttpEventCollector ServerUrl is not set!");
             }
 
-            if (string.IsNullOrEmpty(Token))
+            var token = RenderLogEvent(Token, LogEventInfo.CreateNullEvent());
+            if (string.IsNullOrEmpty(token))
             {
                 throw new NLogConfigurationException("SplunkHttpEventCollector Token is not set!");
             }
 
-            _metaData.Clear();
+            var channel = RenderLogEvent(Channel, LogEventInfo.CreateNullEvent());
+            var index = RenderLogEvent(Index, LogEventInfo.CreateNullEvent());
+            var source = RenderLogEvent(Source, LogEventInfo.CreateNullEvent());
+            var sourceType = RenderLogEvent(SourceType, LogEventInfo.CreateNullEvent());
 
             _hecSender = new HttpEventCollectorSender(
-                ServerUrl,                                                                          // Splunk HEC URL
-                Token,                                                                              // Splunk HEC token *GUID*
-                Channel,                                                                            // Splunk HEC data channel *GUID*
-                GetMetaData(null),                                                                  // Metadata
+                new Uri(serverUri),                                                                 // Splunk HEC URL
+                token,                                                                              // Splunk HEC token *GUID*
+                channel,                                                                            // Splunk HEC data channel *GUID*
+                GetMetaData(index, source, sourceType),                                             // Metadata
                 HttpEventCollectorSender.SendMode.Sequential,                                       // Sequential sending to keep message in order
                 BatchSizeBytes == 0 && BatchSizeCount == 0 ? 0 : 250,                               // BatchInterval - Set to 0 to disable
                 BatchSizeBytes,                                                                     // BatchSizeBytes - Set to 0 to disable
@@ -197,7 +229,10 @@ namespace NLog.Targets.Splunk
             }
 
             // Build MetaData
-            var metaData = GetMetaData(logEventInfo.LoggerName);
+            var index = RenderLogEvent(Index, logEventInfo);
+            var source = RenderLogEvent(Source, logEventInfo);
+            var sourceType = RenderLogEvent(SourceType, logEventInfo);
+            var metaData = GetMetaData(index, source, sourceType);
 
             // Use NLog's built in tooling to get properties
             var properties = GetAllProperties(logEventInfo);
@@ -241,15 +276,15 @@ namespace NLog.Targets.Splunk
         /// </summary>
         /// <param name="loggerName">Name of the logger.</param>
         /// <returns></returns>
-        private HttpEventCollectorEventInfo.Metadata GetMetaData(string loggerName)
+        private HttpEventCollectorEventInfo.Metadata GetMetaData(string index, string source, string sourcetype)
         {
             var hostName = _hostName ?? (_hostName = GetMachineName());
-            if (!_metaData.TryGetValue(loggerName ?? string.Empty, out var metaData))
+            if (!_metaData.TryGetValue(source ?? string.Empty, out var metaData))
             {
                 if (_metaData.Count > 1000)
                     _metaData.Clear();  // Extreme case that should never happen
-                metaData = new HttpEventCollectorEventInfo.Metadata(null, string.IsNullOrEmpty(loggerName) ? null : loggerName, "_json", hostName);
-                _metaData[loggerName ?? string.Empty] = metaData;
+                metaData = new HttpEventCollectorEventInfo.Metadata(string.IsNullOrEmpty(index) ? null : index, string.IsNullOrEmpty(source) ? null : source, sourcetype, hostName);
+                _metaData[source ?? string.Empty] = metaData;
             }
 
             return metaData;
