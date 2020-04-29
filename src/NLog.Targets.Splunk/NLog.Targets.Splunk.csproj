@@ -32,6 +32,8 @@ Version 1.0.0
 - Code cleanup and performance improvements
 Verison 0.0.1
 - First publish to NuGet</PackageReleaseNotes>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>sn.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <!--common NuGet package refs -->
