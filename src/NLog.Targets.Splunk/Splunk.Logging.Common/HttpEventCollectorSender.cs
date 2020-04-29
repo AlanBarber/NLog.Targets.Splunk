@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @copyright
  *
  * Copyright 2013-2015 Splunk, Inc.
@@ -229,6 +229,10 @@ namespace Splunk.Logging
                 // Fallback on PlatformNotSupported and other funny exceptions
                 httpClient = new HttpClient();
             }
+
+            // Enable TLS 1.2
+            NLog.Common.InternalLogger.Debug("Setting TLS1.2 SecurityProtocolType"); 
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
 
             // setup splunk header token
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(AuthorizationHeaderScheme, token);

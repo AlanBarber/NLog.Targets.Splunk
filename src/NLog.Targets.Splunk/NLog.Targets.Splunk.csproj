@@ -4,41 +4,32 @@
     <TargetFrameworks>net45;net472;netstandard2.0</TargetFrameworks>
     <Title>NLog.Targets.Splunk</Title>
     <Description>A NLog target for Splunk's Http Event Collector (HEC) Sender</Description>
-    <Authors>Alan Barber</Authors>
+    <Authors>Alan Barber, Ratzai Yaghoub</Authors>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
     <Copyright>Copyright (c) $(CurrentYear) Alan Barber, Copyright 2013-2015 Splunk, Inc. </Copyright>
     <PackageTags>nlog;nlog-target;splunk;splunk-enterprise;logging</PackageTags>
     <PackageIconUrl>https://raw.githubusercontent.com/AlanBarber/NLog.Targets.Splunk/master/docs/nugeticon.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/AlanBarber/NLog.Targets.Splunk</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/raydk/NLog.Targets.Splunk</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-	<Version>2.2.1</Version>
-    <PackageReleaseNotes>Verison 2.2.1
-- Introduced MaxConnectionsPerServer property to limit number of connections to splunk server by Rolf Kristensen (https://github.com/snakefoot)
-Version 2.2.0
-- Updated NLog version from 4.5.6 to 4.5.9
-- Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
-Version 2.1.0
-- Updated NLog version from 4.5.3 to 4.5.6
-- Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
-- updated to work with NLog's paremeter tooling
-- adding abilty to toggle logging of parameters on or off
-- several performance updates
-- Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
-Version 2.0.0
-- Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
-Version 1.0.0
-- Code cleanup and performance improvements
-Verison 0.0.1
-- First publish to NuGet</PackageReleaseNotes>
+	<Version>1.1.0</Version>
+    <PackageReleaseNotes>Version 1.1.0
+- Updated Newtonsoft.Json to v12.0.3
+- Enabled TLS 1.2 to allow older versions of .NET framework to create requests for Splunk 
+Verison 1.0.0
+- Added strong name to assembly</PackageReleaseNotes>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>sn.snk</AssemblyOriginatorKeyFile>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <PackageId>NLogSplunkTarget</PackageId>
   </PropertyGroup>
 
   <!--common NuGet package refs -->
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="NLog" Version="4.5.9" />
   </ItemGroup>
 
