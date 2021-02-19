@@ -30,6 +30,8 @@ namespace Splunk.Logging
     /// </summary>
     public class HttpEventCollectorEventInfo
     {
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
         #region metadata
 
         /// <summary>
@@ -192,7 +194,7 @@ namespace Splunk.Logging
         /// <param name="metadata">The metadata.</param>
         public HttpEventCollectorEventInfo(DateTime datetime, string id, string level, string messageTemplate, string renderedMessage, object exception, object properties, Metadata metadata)
         {
-            double epochTime = (datetime - new DateTime(1970, 1, 1)).TotalSeconds;
+            double epochTime = (datetime.ToUniversalTime() - UnixEpoch).TotalSeconds;
             Timestamp = epochTime.ToString("#.000", CultureInfo.InvariantCulture); // truncate to 3 digits after floating point
             this.metadata = metadata ?? new Metadata();
             Event = new LoggerEvent(id, level, messageTemplate, renderedMessage, exception, properties);

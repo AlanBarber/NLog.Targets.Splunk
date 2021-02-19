@@ -247,7 +247,7 @@ namespace NLog.Targets.Splunk
 
             // Send the event to splunk
             string renderedMessage = RenderLogEvent(Layout, logEventInfo);
-            _hecSender.Send(null, logEventInfo.Level.Name, logEventInfo.Message, renderedMessage, logEventInfo.Exception, properties, metaData);
+            _hecSender.Send(logEventInfo.TimeStamp, null, logEventInfo.Level.Name, logEventInfo.Message, renderedMessage, logEventInfo.Exception, properties, metaData);
             if (BatchSizeBytes == 0 && BatchSizeCount == 0)
             {
                 _hecSender.FlushSync();
