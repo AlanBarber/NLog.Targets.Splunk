@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30914.41
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLog.Targets.Splunk", "NLog.Targets.Splunk\NLog.Targets.Splunk.csproj", "{64BFE771-EA70-40F9-8183-2DA0A260374B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestApp", "ConsoleTestApp\ConsoleTestApp.csproj", "{1FC3A684-B53E-4010-A6EE-FE2A137F2CA2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestApp", "ConsoleTestApp\ConsoleTestApp.csproj", "{1FC3A684-B53E-4010-A6EE-FE2A137F2CA2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLog.Targets.Splunk.Tests", "NLog.Targets.Splunk.Tests\NLog.Targets.Splunk.Tests.csproj", "{4D322CDC-932F-4DB5-B608-B868DDA452CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCoreWebApp", "AspNetCoreWebApp\AspNetCoreWebApp.csproj", "{BA3CA56B-18B4-43F9-A15D-1F79796515D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCoreWebApp", "AspNetCoreWebApp\AspNetCoreWebApp.csproj", "{BA3CA56B-18B4-43F9-A15D-1F79796515D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
