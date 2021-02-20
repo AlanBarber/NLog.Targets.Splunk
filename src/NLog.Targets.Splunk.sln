@@ -7,9 +7,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLog.Targets.Splunk", "NLog
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTestApp", "ConsoleTestApp\ConsoleTestApp.csproj", "{1FC3A684-B53E-4010-A6EE-FE2A137F2CA2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NLog.Targets.Splunk.Tests", "NLog.Targets.Splunk.Tests\NLog.Targets.Splunk.Tests.csproj", "{4D322CDC-932F-4DB5-B608-B868DDA452CC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NLog.Targets.Splunk.Tests", "NLog.Targets.Splunk.Tests\NLog.Targets.Splunk.Tests.csproj", "{4D322CDC-932F-4DB5-B608-B868DDA452CC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCoreWebApp", "AspNetCoreWebApp\AspNetCoreWebApp.csproj", "{BA3CA56B-18B4-43F9-A15D-1F79796515D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildFiles", "BuildFiles", "{50C33E7F-7A6D-4FB7-8F9F-1E46B506CB3D}"
+	ProjectSection(SolutionItems) = preProject
+		build-nuget-packages.cmd = build-nuget-packages.cmd
+		build-nuget-packages.ps1 = build-nuget-packages.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test Applications", "Test Applications", "{ED979648-978F-4F12-AB23-215A5DC83B15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +44,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1FC3A684-B53E-4010-A6EE-FE2A137F2CA2} = {ED979648-978F-4F12-AB23-215A5DC83B15}
+		{BA3CA56B-18B4-43F9-A15D-1F79796515D9} = {ED979648-978F-4F12-AB23-215A5DC83B15}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1352023C-12FA-4D5B-92BB-3027501BF536}

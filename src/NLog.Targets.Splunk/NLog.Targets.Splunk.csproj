@@ -1,48 +1,74 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net45;net472;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net45;net462;net472;net48;netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0</TargetFrameworks>
     <Title>NLog.Targets.Splunk</Title>
     <Description>A NLog target for Splunk's Http Event Collector (HEC) Sender</Description>
     <Authors>Alan Barber</Authors>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
-    <Copyright>Copyright (c) $(CurrentYear) Alan Barber, Copyright 2013-2015 Splunk, Inc. </Copyright>
+    <Copyright>Copyright (c) 2017-$(CurrentYear) Alan Barber, Copyright 2013-2015 Splunk, Inc. </Copyright>
     <PackageTags>nlog;nlog-target;splunk;splunk-enterprise;logging</PackageTags>
     <PackageIconUrl>https://raw.githubusercontent.com/AlanBarber/NLog.Targets.Splunk/master/docs/nugeticon.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/AlanBarber/NLog.Targets.Splunk</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/AlanBarber/NLog.Targets.Splunk/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>git://github.com/AlanBarber/NLog.Targets.Splunk</RepositoryUrl>
-	<Version>2.2.1</Version>
-    <PackageReleaseNotes>Verison 2.2.1
-- Introduced MaxConnectionsPerServer property to limit number of connections to splunk server by Rolf Kristensen (https://github.com/snakefoot)
-Version 2.2.0
-- Updated NLog version from 4.5.6 to 4.5.9
-- Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
-Version 2.1.0
-- Updated NLog version from 4.5.3 to 4.5.6
-- Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
-- updated to work with NLog's paremeter tooling
-- adding abilty to toggle logging of parameters on or off
-- several performance updates
-- Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
-Version 2.0.0
-- Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
-Version 1.0.0
-- Code cleanup and performance improvements
-Verison 0.0.1
-- First publish to NuGet</PackageReleaseNotes>
+	<Version>3.0.0</Version>
+    <PackageReleaseNotes>
+      Version 3.3.0
+      - Updated NLog version to 4.7.7
+      - Adding support for .NET Standard 2.1, .NET Core 3.1, and .NET 5.0
+      - Adding support for custom web proxy configuration by Darek Dan (https://github.com/DarekDan)
+      - Updating test projects to Net 5.0 by Hangy (https://github.com/hangy)
+      - Several other minor changes
+      Verison 2.2.1
+      - Introduced MaxConnectionsPerServer property to limit number of connections to splunk server by Rolf Kristensen (https://github.com/snakefoot)
+      Version 2.2.0
+      - Updated NLog version from 4.5.6 to 4.5.9
+      - Added support for Splunk HEC Data channel by David Matz (https://github.com/davidmatz)
+      Version 2.1.0
+      - Updated NLog version from 4.5.3 to 4.5.6
+      - Adding 'IgnoreSslErrors' property to config to allow for using Splunk with self signed certs
+      - updated to work with NLog's paremeter tooling
+      - adding abilty to toggle logging of parameters on or off
+      - several performance updates
+      - Speical thanks to Rolf Kristensen (https://github.com/snakefoot) for help with this release!
+      Version 2.0.0
+      - Updated to support .Net Standard 2.0 and .Net 4.5 w/ NLog 4.5.3
+      Version 1.0.0
+      - Code cleanup and performance improvements
+      Verison 0.0.1
+      - First publish to NuGet
+    </PackageReleaseNotes>
   </PropertyGroup>
 
   <!--common NuGet package refs -->
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="NLog" Version="4.5.11" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="NLog" Version="4.7.7" />
   </ItemGroup>
+
+  <!-- .NET 5.0 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net5.0' ">
+    <AssemblyTitle>NLog.Targets.Splunk .NET 5.0</AssemblyTitle>
+    <DefineConstants>NET50</DefineConstants>
+  </PropertyGroup>
+
+  <!--.NET Core 3.1 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
+    <AssemblyTitle>NLog.Targets.Splunk .NET Core 3.1</AssemblyTitle>
+    <DefineConstants>NETCORE;NETSTANDARD</DefineConstants>
+  </PropertyGroup>
 
   <!--.NET Standard 2.0 config -->
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <AssemblyTitle>NLog.Targets.Splunk .NET Standard 2.0</AssemblyTitle>
+    <DefineConstants>NETCORE;NETSTANDARD</DefineConstants>
+  </PropertyGroup>
+
+  <!--.NET Standard 2.1 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
+    <AssemblyTitle>NLog.Targets.Splunk .NET Standard 2.1</AssemblyTitle>
     <DefineConstants>NETCORE;NETSTANDARD</DefineConstants>
   </PropertyGroup>
 
@@ -52,12 +78,25 @@ Verison 0.0.1
     <DefineConstants>NETFULL</DefineConstants>
   </PropertyGroup>
 
+  <!-- .NET 4.6.2 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)'=='net462' ">
+    <AssemblyTitle>NLog.Targets.Splunk .NET 4.6.2</AssemblyTitle>
+    <DefineConstants>NETFULL</DefineConstants>
+  </PropertyGroup>
+
+  <!-- .NET 4.7.2 config -->
   <PropertyGroup Condition=" '$(TargetFramework)'=='net472' ">
     <AssemblyTitle>NLog.Targets.Splunk .NET 4.7.2</AssemblyTitle>
     <DefineConstants>NETFULL</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' or '$(TargetFramework)' == 'net472' ">
+  <!--.NET 4.8 config -->
+  <PropertyGroup Condition=" '$(TargetFramework)'=='net48' ">
+    <AssemblyTitle>NLog.Targets.Splunk .NET 4.8</AssemblyTitle>
+    <DefineConstants>NETFULL</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" $(TargetFramework.StartsWith('net4')) ">
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
