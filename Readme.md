@@ -23,22 +23,22 @@ Then configure the SplunkHttpEventCollector with `ServerUrl` and `Token`:
             serverUrl="https://splunk-server:8088"
             token="token-guid"
             channel="channel-guid"
-			source="${logger}"
-			sourceType="_json"
-			index=""
+            source="${logger}"
+            sourceType="_json"
+            index=""
             retriesOnError="0"
             batchSizeBytes="0"
             batchSizeCount="0"
             includeEventProperties="true"
             includePositionalParameters="false"
-			includeMdlc="false"
+            includeMdlc="false"
             maxConnectionsPerServer="10"
             ignoreSslErrors="false"
-			useProxy="true"
+            useProxy="true"
             proxyUrl="http://proxy:8888"
             proxyUser="username"
             proxyPassword="secret"            
-			>
+            >
 		<contextproperty name="host" layout="${machinename}" />
 		<contextproperty name="threadid" layout="${threadid}" />
 		<contextproperty name="logger" layout="${logger}" />
