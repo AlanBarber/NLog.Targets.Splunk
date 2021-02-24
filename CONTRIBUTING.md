@@ -17,20 +17,24 @@ Help us keep the project open and inclusive. Please read and follow our
 If you have a question about how to use the software, please read the
 [Documentation][documentation].
 
-The GitHub issues should only be used for reporting bugs and feature requests,
+If you need more support please ask in the [General Support][support] discussion
+board.
+
+The GitHub [Issues][issues] should only be used for reporting bugs,
 not tech support.
 
 ## <a name="issue"></a> Found an Issue?
 
 If you find a bug in the source code or a mistake in the documentation, you can
-help us by submitting an issue to our [GitHub Repository][github] Even better you can
+help us by submitting an [Issue][issues] to our GitHub repository Even better you can
 submit a Pull Request with a fix.
 
 **Please see the Submission Guidelines below**.
 
 ## <a name="feature"></a> Want a Feature?
 
-You can request a new feature by submitting an issue to our [GitHub Repository][github].  
+You can request a new feature by submitting an issue to our [Request Feature][feature]
+discussion board.  
 
 If you would like to implement a new feature then consider what kind of change 
 it is:
@@ -66,4 +70,7 @@ to what might be
 [github]: https://github.com/alanbarber/NLog.Targets.Splunk
 [documentation]: https://github.com/alanbarber/NLog.Targets.Splunk/blob/master/README.md
 [codeofconduct]: https://github.com/alanbarber/NLog.Targets.Splunk/blob/master/CODE_OF_CONDUCT.md
+[support]: https://github.com/AlanBarber/NLog.Targets.Splunk/discussions/categories/general-support
+[feature]: https://github.com/AlanBarber/NLog.Targets.Splunk/discussions/categories/request-features
+[issues]: https://github.com/AlanBarber/NLog.Targets.Splunk/issues
 [pullrequesthelp]: https://help.github.com/articles/using-pull-requests
