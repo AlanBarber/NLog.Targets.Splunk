@@ -115,6 +115,8 @@ namespace Splunk.Logging
             }
             if (statusCode != HttpStatusCode.OK || webException != null)
             {
+                // when splunk connectivity is failed then set status to failed.This status  help to switch target in nlog config file
+                GlobalDiagnosticsContext.Set("splunkstatus", "failed");
                 throw new HttpEventCollectorException(
                     code: statusCode == HttpStatusCode.OK ? HttpStatusCode.InternalServerError : statusCode,
                     webException: webException,
@@ -123,6 +125,10 @@ namespace Splunk.Logging
                     serializedEvents: System.Text.Encoding.UTF8.GetString(serializedEvents)
                 );
             }
+            else{
+                // when splunk connectivity is failed then set status to failed
+                GlobalDiagnosticsContext.Set("splunkstatus", "success");
+            }  
             return response;
         }
     }
